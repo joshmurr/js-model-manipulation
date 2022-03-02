@@ -6,6 +6,10 @@ module.exports = {
     'plugin:@typescript-eslint/recommended', // Uses the recommended rules from @typescript-eslint/eslint-plugin
     'prettier',
   ],
+  env: {
+    browser: true,
+    node: true,
+  },
   parserOptions: {
     ecmaVersion: 2018, // Allows for the parsing of modern ECMAScript features
     sourceType: 'module', // Allows for the use of imports
