@@ -3,6 +3,8 @@
 import * as tf from '@tensorflow/tfjs'
 import { MnistData } from './data.js'
 
+import './styles.scss'
+
 type LayerFilters = { [k: string]: Array<tf.Tensor[]> }
 
 async function showExamples(data: MnistData) {
@@ -185,9 +187,9 @@ async function renderKernels(filterLayers: LayerFilters) {
             const ix = (y * w + x) * 4
 
             const iv = y * w + x
-            img.data[ix + 0] = Math.floor(255 * data[iv])
-            img.data[ix + 1] = Math.floor(255 * data[iv])
-            img.data[ix + 2] = Math.floor(255 * data[iv])
+            img.data[ix + 0] = Math.floor(127 * (data[iv] + 1))
+            img.data[ix + 1] = Math.floor(127 * (data[iv] + 1))
+            img.data[ix + 2] = Math.floor(127 * (data[iv] + 1))
             img.data[ix + 3] = 255
           }
         }
@@ -202,7 +204,7 @@ async function renderKernels(filterLayers: LayerFilters) {
 
 async function train(model: tf.LayersModel, data: MnistData) {
   const onEpochEnd = async (epoch: number, logs: tf.Logs) => {
-    if (epoch % 2 === 0) {
+    if (epoch % 10 === 0) {
       console.log('Rendering...')
       const layers: Array<tf.layers.Layer> = await getLayers(model, data)
       const filters = await getFilters(layers)
@@ -227,7 +229,7 @@ async function train(model: tf.LayersModel, data: MnistData) {
   return model.fit(trainXs, trainYs, {
     batchSize: BATCH_SIZE,
     validationData: [testXs, testYs],
-    epochs: 1,
+    epochs: 150,
     shuffle: true,
     callbacks: { onEpochEnd },
   })

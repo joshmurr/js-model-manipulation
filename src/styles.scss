@@ -1,0 +1,20 @@
+html {
+  box-sizing: border-box;
+}
+*,
+*:after,
+*:before {
+  box-sizing: inherit;
+}
+body {
+  margin: 0;
+  padding: 0;
+  background-color: lightgrey;
+}
+
+#kernels {
+  canvas {
+    width: 30px;
+    height: 30px;
+  }
+}
