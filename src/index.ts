@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import * as tf from '@tensorflow/tfjs'
+import CNN from './CNN'
 import { MnistData } from './data.js'
 
 import './styles.scss'
@@ -32,144 +33,16 @@ async function showExamples(data: MnistData) {
   }
 }
 
-function getModel() {
-  const model = tf.sequential()
-
-  const IMAGE_WIDTH = 28
-  const IMAGE_HEIGHT = 28
-  const IMAGE_CHANNELS = 1
-
-  model.add(
-    tf.layers.conv2d({
-      inputShape: [IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_CHANNELS],
-      kernelSize: 5,
-      filters: 8,
-      strides: 1,
-      activation: 'relu',
-      kernelInitializer: 'varianceScaling',
-    })
-  )
-
-  model.add(tf.layers.maxPooling2d({ poolSize: [2, 2], strides: [2, 2] }))
-
-  model.add(
-    tf.layers.conv2d({
-      kernelSize: 5,
-      filters: 16,
-      strides: 1,
-      activation: 'relu',
-      kernelInitializer: 'varianceScaling',
-    })
-  )
-  model.add(tf.layers.maxPooling2d({ poolSize: [2, 2], strides: [2, 2] }))
-
-  model.add(tf.layers.flatten())
-
-  const NUM_OUTPUT_CLASSES = 10
-  model.add(
-    tf.layers.dense({
-      units: NUM_OUTPUT_CLASSES,
-      kernelInitializer: 'varianceScaling',
-      activation: 'softmax',
-    })
-  )
-
-  const optimizer = tf.train.adam()
-  model.compile({
-    optimizer: optimizer,
-    loss: 'categoricalCrossentropy',
-    metrics: ['accuracy'],
-  })
-
-  return model
-}
-
-//function getLayerOutputs(model: tf.LayersModel, data: MnistData) {
-//return tf.tidy(() => {
-//const [X, y] = tf.tidy(() => {
-//const d = data.single()
-//return [d.xs.reshape([1, 28, 28, 1]), d.labels]
-//})
-
-//const withIntermediate = true
-
-//if (withIntermediate === true) {
-//const outputNames = []
-
-//for (let i = 0; i <= model.layers.length - 1; i++) {
-//const layer = model.getLayer(undefined, i)
-//console.log(layer)
-//const name = layer.output.name
-//outputNames.push(name)
-//}
-//} else {
-//outputNames = [
-//model.getLayer(undefined, model.layers.length - 1).output.name,
-//]
-//}
-
-//const outputs = model.execute(X, outputNames)
-////this.renderEverything(outputs);
-//return outputs
-//})
-//}
-
-async function getLayers(model: tf.LayersModel, data: MnistData) {
-  const layers = []
-
-  for (let i = 0; i <= model.layers.length - 1; i++) {
-    const layer = model.getLayer(undefined, i)
-    if (layer.name.includes('conv2d')) {
-      layers.push(layer)
-    }
-  }
-
-  return layers
-}
-
-async function getFilters(layers: Array<tf.layers.Layer>) {
-  const layerFilters: LayerFilters = {}
-
-  for (const layer of layers) {
-    const filters = []
-
-    const kernelDesc = await layer.getWeights()[0]
-    const kernelData = await kernelDesc.data()
-
-    const shape = kernelDesc.shape
-    const numFilters = shape[3]
-
-    for (let i = 0; i < numFilters; i++) {
-      const kernels = []
-      for (let j = 0; j < shape[2]; j++) {
-        const newShape = [shape[0], shape[1], j + 1, i + 1]
-        const chunk = kernelDesc.stridedSlice(
-          [0, 0, j, i],
-          newShape,
-          [1, 1, 1, 1]
-        )
-
-        kernels.push(chunk)
-      }
-
-      filters.push(kernels)
-    }
-    const k: keyof LayerFilters = layer.name
-    layerFilters[k] = filters
-  }
-  return layerFilters
-}
-
 async function renderKernels(filterLayers: LayerFilters) {
   const renderDiv = document.getElementById('kernels')
-  const row = document.createElement('div')
 
   for (const layerName in filterLayers) {
     const filterArray = filterLayers[layerName]
     const title = document.createElement('h4')
     title.innerText = layerName
-    row.appendChild(title)
+    renderDiv.appendChild(title)
     for (const f of filterArray) {
+      const row = document.createElement('div')
       for (const k of f) {
         //const rk = tf.image.resizeNearestNeighbor(k.squeeze(-1), [28,28])
         const [w, h, d, _] = k.shape
@@ -202,19 +75,19 @@ async function renderKernels(filterLayers: LayerFilters) {
   }
 }
 
-async function train(model: tf.LayersModel, data: MnistData) {
+async function train(model: CNN, data: MnistData) {
   const onEpochEnd = async (epoch: number, logs: tf.Logs) => {
     if (epoch % 10 === 0) {
       console.log('Rendering...')
-      const layers: Array<tf.layers.Layer> = await getLayers(model, data)
-      const filters = await getFilters(layers)
+      const layers: Array<tf.layers.Layer> = await model.getLayers()
+      const filters = await model.getFilters(layers)
       await renderKernels(filters)
     }
   }
 
-  const BATCH_SIZE = 512
-  const TRAIN_DATA_SIZE = 5500
-  const TEST_DATA_SIZE = 1000
+  const BATCH_SIZE = 8 // 512
+  const TRAIN_DATA_SIZE = 8 // 5500
+  const TEST_DATA_SIZE = 8 // 1000
 
   const [trainXs, trainYs] = tf.tidy(() => {
     const d = data.nextTrainBatch(TRAIN_DATA_SIZE)
@@ -226,48 +99,13 @@ async function train(model: tf.LayersModel, data: MnistData) {
     return [d.xs.reshape([TEST_DATA_SIZE, 28, 28, 1]), d.labels]
   })
 
-  return model.fit(trainXs, trainYs, {
+  return model.model.fit(trainXs, trainYs, {
     batchSize: BATCH_SIZE,
     validationData: [testXs, testYs],
-    epochs: 150,
+    epochs: 1,
     shuffle: true,
     callbacks: { onEpochEnd },
   })
-}
-
-const classNames = [
-  'Zero',
-  'One',
-  'Two',
-  'Three',
-  'Four',
-  'Five',
-  'Six',
-  'Seven',
-  'Eight',
-  'Nine',
-]
-
-function doPrediction(
-  model: tf.LayersModel,
-  data: MnistData,
-  testDataSize = 500
-) {
-  const IMAGE_WIDTH = 28
-  const IMAGE_HEIGHT = 28
-  const testData = data.nextTestBatch(testDataSize)
-  const testxs = testData.xs.reshape([
-    testDataSize,
-    IMAGE_WIDTH,
-    IMAGE_HEIGHT,
-    1,
-  ])
-  const labels = testData.labels.argMax(-1)
-  const preds = model.predict(testxs) as tf.Tensor
-  const pred = preds.argMax(-1)
-
-  testxs.dispose()
-  return [pred, labels]
 }
 
 async function run() {
@@ -279,7 +117,9 @@ async function run() {
   document.body.appendChild(renderDiv)
 
   //await showExamples(data);
-  const model = getModel()
+  //const model = getModel()
+
+  const model = new CNN()
 
   await train(model, data)
 }
