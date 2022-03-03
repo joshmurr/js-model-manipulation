@@ -2,6 +2,7 @@
 
 import * as tf from '@tensorflow/tfjs'
 import CNN from './CNN'
+import GUI from './GUI'
 import { MnistData } from './data.js'
 
 import './styles.scss'
@@ -75,14 +76,12 @@ async function renderKernels(filterLayers: LayerFilters) {
   }
 }
 
-async function train(model: CNN, data: MnistData) {
+async function train(model: CNN, data: MnistData, gui: GUI) {
   const onEpochEnd = async (epoch: number, logs: tf.Logs) => {
-    if (epoch % 10 === 0) {
-      console.log('Rendering...')
-      const layers: Array<tf.layers.Layer> = await model.getLayers()
-      const filters = await model.getFilters(layers)
-      await renderKernels(filters)
-    }
+    console.log('Rendering...')
+    //const layers: Array<tf.layers.Layer> = await model.getLayers()
+    //const filters = await model.getFilters(layers)
+    await gui.update(model)
   }
 
   const BATCH_SIZE = 8 // 512
@@ -102,7 +101,7 @@ async function train(model: CNN, data: MnistData) {
   return model.model.fit(trainXs, trainYs, {
     batchSize: BATCH_SIZE,
     validationData: [testXs, testYs],
-    epochs: 1,
+    epochs: 5,
     shuffle: true,
     callbacks: { onEpochEnd },
   })
@@ -112,16 +111,20 @@ async function run() {
   const data = new MnistData()
   await data.load()
 
-  const renderDiv = document.createElement('div')
-  renderDiv.id = 'kernels'
-  document.body.appendChild(renderDiv)
+  const gui = new GUI()
+
+  //const renderDiv = document.createElement('div')
+  //renderDiv.id = 'kernels'
+  //document.body.appendChild(renderDiv)
 
   //await showExamples(data);
   //const model = getModel()
 
   const model = new CNN()
 
-  await train(model, data)
+  await gui.init(model)
+
+  await train(model, data, gui)
 }
 
 document.addEventListener('DOMContentLoaded', run)

@@ -12,9 +12,12 @@ body {
   background-color: lightgrey;
 }
 
-#kernels {
+#display {
   canvas {
-    width: 30px;
-    height: 30px;
+    width: 64px;
+    height: 64px;
+    /* Render like gl.NEAREST */
+    image-rendering: crisp-edges; /* for firefox */
+    image-rendering: pixelated; /* for everything else */
   }
 }
