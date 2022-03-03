@@ -1,23 +1,32 @@
 import * as tf from '@tensorflow/tfjs'
 import Model from './Model'
-
-type LayerFilters = { [k: string]: Array<tf.Tensor[]> }
+import { LayerFilters, Button } from './types'
 
 export default class GUI {
+  public container: HTMLElement
   public display: HTMLElement
 
   constructor() {
+    this.container = document.getElementById('container')
     this.display = document.createElement('div')
     this.display.id = 'display'
-    document.body.appendChild(this.display)
+    this.container.appendChild(this.display)
   }
 
-  async init(model: Model) {
+  initButtons(buttons: Array<Button>) {
+    buttons.forEach((button) => {
+      const { selector, eventListener, callback } = button
+      console.log(selector, eventListener, callback)
+      const buttonEl = document.querySelector(selector)
+      buttonEl.addEventListener(eventListener, callback)
+    })
+  }
+
+  async initModel(model: Model) {
     const layers: Array<tf.layers.Layer> = await model.getLayers()
     const layerFilters: LayerFilters = await model.getFilters(layers)
     const layerNames = Object.keys(layerFilters)
 
-    //for (const layerName in layerFilters) {
     layerNames.forEach((layerName, l_id) => {
       const filterArray = layerFilters[layerName]
       const title = document.createElement('h4')
@@ -46,10 +55,8 @@ export default class GUI {
     const layerFilters: LayerFilters = await model.getFilters(layers)
     const layerNames = Object.keys(layerFilters)
 
-    //for (const layerName in layerFilters) {
     layerNames.forEach((layerName, l_id) => {
       const filterArray = layerFilters[layerName]
-
       filterArray.forEach((filter, f_id) => {
         filter.forEach((kernel, k_id) => {
           const kernel_id = this.getKernelId(l_id, f_id, k_id)

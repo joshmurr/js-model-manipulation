@@ -4,6 +4,9 @@ import * as tf from '@tensorflow/tfjs'
 import CNN from './CNN'
 import GUI from './GUI'
 import { MnistData } from './data.js'
+import StateHandler from './StateHandler'
+
+import { Button } from './types'
 
 import './styles.scss'
 
@@ -71,13 +74,23 @@ async function run() {
   const data = new MnistData()
   await data.load()
 
+  const state = new StateHandler()
+  const buttons: Array<Button> = [
+    {
+      selector: '.play-btn',
+      eventListener: 'click',
+      callback: state.handlePlay(),
+    },
+  ]
+
   const gui = new GUI()
+  gui.initButtons(buttons)
 
   //await showExamples(data);
 
   const model = new CNN()
 
-  await gui.init(model)
+  await gui.initModel(model)
   await train(model, data, gui)
 }
 
