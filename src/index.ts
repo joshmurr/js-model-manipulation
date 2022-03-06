@@ -35,63 +35,35 @@ async function showExamples(data: MnistData) {
   }
 }
 
-async function train(model: CNN, data: MnistData, gui: GUI) {
-  const onEpochEnd = async (epoch: number, logs: tf.Logs) => {
-    if (epoch % 10 === 0) {
-      console.log('Rendering...')
-      await gui.update(model)
-    }
-  }
-
-  const onTrainEnd = () => {
-    console.log('Finito')
-  }
-
-  const BATCH_SIZE = 8 // 512
-  const TRAIN_DATA_SIZE = 8 // 5500
-  const TEST_DATA_SIZE = 8 // 1000
-
-  const [trainXs, trainYs] = tf.tidy(() => {
-    const d = data.nextTrainBatch(TRAIN_DATA_SIZE)
-    return [d.xs.reshape([TRAIN_DATA_SIZE, 28, 28, 1]), d.labels]
-  })
-
-  const [testXs, testYs] = tf.tidy(() => {
-    const d = data.nextTestBatch(TEST_DATA_SIZE)
-    return [d.xs.reshape([TEST_DATA_SIZE, 28, 28, 1]), d.labels]
-  })
-
-  return model.model.fit(trainXs, trainYs, {
-    batchSize: BATCH_SIZE,
-    validationData: [testXs, testYs],
-    epochs: 1,
-    shuffle: true,
-    callbacks: { onEpochEnd, onTrainEnd },
-  })
-}
-
 async function run() {
   const data = new MnistData()
   await data.load()
 
-  const state = new StateHandler()
+  const gui = new GUI()
+  const model = new CNN()
+
   const buttons: Array<Button> = [
     {
       selector: '.play-btn',
-      eventListener: 'click',
-      callback: state.handlePlay(),
+      eventListener: 'mouseup',
+      callback: trainModel,
     },
   ]
 
-  const gui = new GUI()
   gui.initButtons(buttons)
 
   //await showExamples(data);
 
-  const model = new CNN()
-
   await gui.initModel(model)
-  await train(model, data, gui)
+
+  async function trainModel() {
+    if (model.isTraining) {
+      model.isTraining = false
+    } else {
+      model.isTraining = true
+      await model.train(data, gui)
+    }
+  }
 }
 
 document.addEventListener('DOMContentLoaded', run)

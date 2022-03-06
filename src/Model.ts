@@ -3,17 +3,17 @@ import * as tf from '@tensorflow/tfjs'
 import { LayerFilters } from './types'
 
 export default class Model {
-  public model: tf.Sequential
+  public net: tf.Sequential | null
 
   protected build() {
-    this.model = tf.sequential()
+    this.net = tf.sequential()
   }
 
   async getLayers() {
     const layers = []
 
-    for (let i = 0; i <= this.model.layers.length - 1; i++) {
-      const layer = this.model.getLayer(undefined, i)
+    for (let i = 0; i <= this.net.layers.length - 1; i++) {
+      const layer = this.net.getLayer(undefined, i)
       if (layer.name.includes('conv2d')) {
         layers.push(layer)
       }
@@ -54,7 +54,7 @@ export default class Model {
     return layerFilters
   }
 
-  //function getLayerOutputs(model: tf.LayersModel, data: MnistData) {
+  //function getLayerOutputs(net: tf.LayersModel, data: MnistData) {
   //return tf.tidy(() => {
   //const [X, y] = tf.tidy(() => {
   //const d = data.single()
@@ -66,19 +66,19 @@ export default class Model {
   //if (withIntermediate === true) {
   //const outputNames = []
 
-  //for (let i = 0; i <= model.layers.length - 1; i++) {
-  //const layer = model.getLayer(undefined, i)
+  //for (let i = 0; i <= net.layers.length - 1; i++) {
+  //const layer = net.getLayer(undefined, i)
   //console.log(layer)
   //const name = layer.output.name
   //outputNames.push(name)
   //}
   //} else {
   //outputNames = [
-  //model.getLayer(undefined, model.layers.length - 1).output.name,
+  //net.getLayer(undefined, net.layers.length - 1).output.name,
   //]
   //}
 
-  //const outputs = model.execute(X, outputNames)
+  //const outputs = net.execute(X, outputNames)
   ////this.renderEverything(outputs);
   //return outputs
   //})

@@ -16,7 +16,6 @@ export default class GUI {
   initButtons(buttons: Array<Button>) {
     buttons.forEach((button) => {
       const { selector, eventListener, callback } = button
-      console.log(selector, eventListener, callback)
       const buttonEl = document.querySelector(selector)
       buttonEl.addEventListener(eventListener, callback)
     })
