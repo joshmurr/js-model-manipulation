@@ -32,6 +32,18 @@ body {
   }
 }
 
+#editor {
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  canvas {
+    width: 256px;
+    height: 256px;
+    image-rendering: crisp-edges; /* for firefox */
+    image-rendering: pixelated; /* for everything else */
+  }
+}
+
 #buttons {
   width: 100%;
   display: flex;
@@ -40,4 +52,12 @@ body {
   .play-btn {
     background-color: gray;
   }
+}
+
+.hide {
+  display: none;
+}
+
+.show {
+  display: block;
 }

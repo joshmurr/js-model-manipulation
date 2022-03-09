@@ -1,10 +1,12 @@
 import * as tf from '@tensorflow/tfjs'
 import Model from './Model'
+import Editor from './Editor'
 import { LayerFilters, Button } from './types'
 
 export default class GUI {
   public container: HTMLElement
   public display: HTMLElement
+  public editor: Editor
 
   constructor() {
     this.container = document.getElementById('container')
@@ -21,7 +23,7 @@ export default class GUI {
     })
   }
 
-  async initModel(model: Model) {
+  async initModel(model: Model, editor: Editor) {
     const layers: Array<tf.layers.Layer> = await model.getLayers()
     const layerFilters: LayerFilters = await model.getFilters(layers)
     const layerNames = Object.keys(layerFilters)
@@ -41,6 +43,8 @@ export default class GUI {
           canvas.width = w
           canvas.height = h
           canvas.id = this.getKernelId(l_id, f_id, k_id)
+
+          canvas.addEventListener('click', (e) => editor.show(e))
 
           row.appendChild(canvas)
         })

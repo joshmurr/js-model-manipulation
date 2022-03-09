@@ -93,9 +93,9 @@ export default class CNN extends Model {
       console.log('Finished training.')
     }
 
-    const BATCH_SIZE = 512
-    const TRAIN_DATA_SIZE = 5500
-    const TEST_DATA_SIZE = 1000
+    const BATCH_SIZE = 8 // 512
+    const TRAIN_DATA_SIZE = 8 // 5500
+    const TEST_DATA_SIZE = 8 //1000
 
     const [trainXs, trainYs] = tf.tidy(() => {
       const d = data.nextTrainBatch(TRAIN_DATA_SIZE)
@@ -117,7 +117,7 @@ export default class CNN extends Model {
     await this.net.fit(trainXs, trainYs, {
       batchSize: BATCH_SIZE,
       validationData: [testXs, testYs],
-      epochs: 40,
+      epochs: 1e9,
       shuffle: true,
       callbacks: { onEpochEnd, onTrainEnd },
     })

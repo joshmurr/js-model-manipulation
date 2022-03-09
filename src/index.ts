@@ -3,6 +3,7 @@
 import * as tf from '@tensorflow/tfjs'
 import CNN from './CNN'
 import GUI from './GUI'
+import Editor from './Editor'
 import { MnistData } from './data.js'
 import StateHandler from './StateHandler'
 
@@ -37,6 +38,7 @@ async function run() {
   await data.load()
 
   const gui = new GUI()
+  const editor = new Editor()
   const model = new CNN()
 
   const buttons: Array<Button> = [
@@ -51,7 +53,7 @@ async function run() {
 
   //await showExamples(data);
 
-  await gui.initModel(model)
+  await gui.initModel(model, editor)
 
   async function trainModel() {
     if (model.isTraining) {
