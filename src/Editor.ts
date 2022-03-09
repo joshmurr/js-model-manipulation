@@ -13,12 +13,15 @@ export default class Editor {
 
     this.hideDisplay()
 
-    this.container.addEventListener(
+    const close = document.createElement('span')
+    close.innerText = 'X'
+    close.addEventListener(
       'click',
       function () {
         this.hideDisplay()
       }.bind(this)
     )
+    this.container.appendChild(close)
 
     this.canvas = document.createElement('canvas')
     this.ctx = this.canvas.getContext('2d')
