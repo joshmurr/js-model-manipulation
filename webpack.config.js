@@ -1,8 +1,9 @@
-const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const ESLintPlugin = require('eslint-webpack-plugin');
+const path = require('path')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+const ESLintPlugin = require('eslint-webpack-plugin')
+const CopyWebpackPlugin = require('copy-webpack-plugin')
 
 module.exports = {
   mode: 'development',
@@ -30,6 +31,21 @@ module.exports = {
             transpileOnly: true,
           },
         },
+      },
+      {
+        test: /\.(png|svg|jpg|jpeg|gif)$/i,
+        type: 'asset/resource',
+      },
+      {
+        test: /\.dat$/,
+        use: [
+          {
+            loader: 'file-loader',
+            options: {
+              outputPath: 'assets',
+            },
+          },
+        ],
       },
       {
         test: /\.(scss|css)$/,
@@ -66,5 +82,13 @@ module.exports = {
       extensions: ['.tsx', '.ts', '.js'],
       exclude: 'node_modules',
     }),
+    //new CopyWebpackPlugin({
+    //patterns: [
+    //{
+    //from: 'src/assets',
+    //to: 'assets',
+    //},
+    //],
+    //}),
   ],
-};
+}

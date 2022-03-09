@@ -11,14 +11,11 @@ import { Button } from './types'
 import './styles.scss'
 
 async function showExamples(data: MnistData) {
-  // Get the examples
   const examples = data.nextTestBatch(20)
   const numExamples = examples.xs.shape[0]
 
-  // Create a canvas element to render each example
   for (let i = 0; i < numExamples; i++) {
     const imageTensor = tf.tidy(() => {
-      // Reshape the image to 28x28 px
       return examples.xs
         .slice([i, 0], [1, examples.xs.shape[1]])
         .reshape([28, 28, 1])

@@ -3,7 +3,8 @@ import * as tf from '@tensorflow/tfjs'
 import { LayerFilters } from './types'
 
 export default class Model {
-  public net: tf.Sequential | null
+  public net: tf.LayersModel | tf.Sequential
+  protected training = false
 
   protected build() {
     this.net = tf.sequential()
@@ -52,6 +53,14 @@ export default class Model {
       layerFilters[k] = filters
     }
     return layerFilters
+  }
+
+  public set isTraining(training: boolean) {
+    this.training = training
+  }
+
+  public get isTraining() {
+    return this.training
   }
 
   //function getLayerOutputs(net: tf.LayersModel, data: MnistData) {
