@@ -2,7 +2,7 @@ import * as tf from '@tensorflow/tfjs'
 import Model from './Model'
 import Editor from './Editor'
 import Chart from './Chart'
-import { LayerFilters, Button } from './types'
+import { LayerFilters, Button, PixelData } from './types'
 
 export default class GUI {
   public container: HTMLElement
@@ -30,6 +30,8 @@ export default class GUI {
   }
 
   async initModel(model: Model, editor: Editor) {
+    this.editor = editor
+
     const layers: Array<tf.layers.Layer> = await model.getLayers()
     const layerFilters: LayerFilters = await model.getFilters(layers)
     const layerNames = Object.keys(layerFilters)
@@ -50,7 +52,10 @@ export default class GUI {
           canvas.height = h
           canvas.id = this.getKernelId(l_id, f_id, k_id)
 
-          canvas.addEventListener('click', (e) => editor.show(e))
+          canvas.addEventListener('click', (e) => {
+            model.isTraining = false
+            editor.show(e, this.setKernel)
+          })
 
           row.appendChild(canvas)
         })
@@ -59,11 +64,21 @@ export default class GUI {
     })
   }
 
+  setKernel(kernelId: string, data: PixelData) {
+    const canvas = <HTMLCanvasElement>document.getElementById(kernelId)
+    const ctx = canvas.getContext('2d')
+    ctx.putImageData(data.p, data.x, data.y)
+  }
+
   async update(model: Model, log?: tf.Logs) {
     await this.drawFilters(model)
     if (log) {
       this.chart.update(log)
       this.chart.draw()
+    }
+
+    if (this.editor.needsUpdate) {
+      console.log('update model')
     }
   }
 

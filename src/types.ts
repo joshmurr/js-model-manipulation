@@ -10,3 +10,11 @@ export interface Button {
 }
 
 export type InputShape = [number, number, number, number]
+
+export interface PixelData {
+  p: ImageData
+  x: number
+  y: number
+}
+
+export type ModelCallback = (k: string, data: PixelData) => void

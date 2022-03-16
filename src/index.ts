@@ -38,7 +38,6 @@ async function run() {
   await data.load()
 
   const gui = new GUI()
-  const editor = new Editor()
 
   const buttons: Array<Button> = [
     {
@@ -53,6 +52,7 @@ async function run() {
   //await showExamples(data);
 
   const model = await new CNN(gui)
+  const editor = new Editor()
   await gui.initModel(model, editor)
   gui.initChart('loss')
   await model.warm()
