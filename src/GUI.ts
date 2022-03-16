@@ -1,12 +1,14 @@
 import * as tf from '@tensorflow/tfjs'
 import Model from './Model'
 import Editor from './Editor'
+import Chart from './Chart'
 import { LayerFilters, Button } from './types'
 
 export default class GUI {
   public container: HTMLElement
   public display: HTMLElement
   public editor: Editor
+  public chart: Chart
 
   constructor() {
     this.container = document.getElementById('container')
@@ -21,6 +23,10 @@ export default class GUI {
       const buttonEl = document.querySelector(selector)
       buttonEl.addEventListener(eventListener, callback)
     })
+  }
+
+  initChart(metrics: string | string[]) {
+    this.chart = new Chart(metrics)
   }
 
   async initModel(model: Model, editor: Editor) {
@@ -53,7 +59,15 @@ export default class GUI {
     })
   }
 
-  async update(model: Model) {
+  async update(model: Model, log: tf.Logs | null) {
+    await this.drawFilters(model)
+    if (log) {
+      this.chart.update(log)
+      this.chart.draw()
+    }
+  }
+
+  async drawFilters(model: Model) {
     const layers: Array<tf.layers.Layer> = await model.getLayers()
     const layerFilters: LayerFilters = await model.getFilters(layers)
     const layerNames = Object.keys(layerFilters)

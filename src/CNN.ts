@@ -91,18 +91,18 @@ export default class CNN extends Model {
     tf.tidy(() => {
       this.net.predict(tf.zeros(this.INPUT_SHAPE))
     })
-    await this.gui.update(this)
+    await this.gui.update(this, null)
   }
 
   async train(data: MnistData) {
-    const onEpochEnd = async (epoch: number) => {
+    const onEpochEnd = async (epoch: number, log: tf.Logs) => {
       if (this.training === false) {
         this.net.stopTraining = true
       }
 
       if (epoch % 10 === 0) {
         console.log(`Epoch: ${epoch}, Rendering...`)
-        await this.gui.update(this)
+        await this.gui.update(this, log)
       }
     }
 

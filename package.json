@@ -36,6 +36,7 @@
   },
   "dependencies": {
     "@tensorflow/tfjs": "^3.13.0",
+    "@tensorflow/tfjs-vis": "^1.5.1",
     "npyjs": "^0.2.1"
   }
 }

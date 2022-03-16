@@ -54,6 +54,7 @@ async function run() {
 
   const model = await new CNN(gui)
   await gui.initModel(model, editor)
+  gui.initChart('loss')
   await model.warm()
 
   async function trainModel() {

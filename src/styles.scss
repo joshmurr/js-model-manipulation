@@ -9,7 +9,7 @@ html {
 body {
   margin: 0;
   padding: 0;
-  background-color: lightgrey;
+  background-color: white;
 }
 
 #container {
@@ -58,4 +58,15 @@ body {
 
 .show {
   display: block;
+}
+
+.chart-container {
+  position: fixed;
+  top: 0;
+  right: 0;
+  background-color: lightgrey;
+
+  .chart {
+    margin: 5px;
+  }
 }
