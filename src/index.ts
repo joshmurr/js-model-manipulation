@@ -39,7 +39,6 @@ async function run() {
 
   const gui = new GUI()
   const editor = new Editor()
-  const model = new CNN()
 
   const buttons: Array<Button> = [
     {
@@ -53,14 +52,16 @@ async function run() {
 
   //await showExamples(data);
 
+  const model = await new CNN(gui)
   await gui.initModel(model, editor)
+  await model.warm()
 
   async function trainModel() {
     if (model.isTraining) {
       model.isTraining = false
     } else {
       model.isTraining = true
-      await model.train(data, gui)
+      await model.train(data)
     }
   }
 }

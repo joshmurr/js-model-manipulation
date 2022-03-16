@@ -2,11 +2,14 @@ import * as tf from '@tensorflow/tfjs'
 import Model from './Model'
 import { MnistData } from './data.js'
 import GUI from './GUI'
+import { InputShape } from './types'
 
 export default class CNN extends Model {
   private IMAGE_WIDTH: number
   private IMAGE_HEIGHT: number
   private IMAGE_CHANNELS: number
+  private INPUT_SHAPE: InputShape
+  private gui: GUI
 
   public classNames: string[] = [
     'Zero',
@@ -21,11 +24,18 @@ export default class CNN extends Model {
     'Nine',
   ]
 
-  constructor() {
+  constructor(gui: GUI) {
     super()
     this.IMAGE_WIDTH = 28
     this.IMAGE_HEIGHT = 28
     this.IMAGE_CHANNELS = 1
+    this.INPUT_SHAPE = [
+      1,
+      this.IMAGE_WIDTH,
+      this.IMAGE_HEIGHT,
+      this.IMAGE_CHANNELS,
+    ]
+    this.gui = gui
     this.build()
   }
 
@@ -77,7 +87,14 @@ export default class CNN extends Model {
     }
   }
 
-  async train(data: MnistData, gui: GUI) {
+  public async warm() {
+    tf.tidy(() => {
+      this.net.predict(tf.zeros(this.INPUT_SHAPE))
+    })
+    await this.gui.update(this)
+  }
+
+  async train(data: MnistData) {
     const onEpochEnd = async (epoch: number) => {
       if (this.training === false) {
         this.net.stopTraining = true
@@ -85,7 +102,7 @@ export default class CNN extends Model {
 
       if (epoch % 10 === 0) {
         console.log(`Epoch: ${epoch}, Rendering...`)
-        await gui.update(this)
+        await this.gui.update(this)
       }
     }
 

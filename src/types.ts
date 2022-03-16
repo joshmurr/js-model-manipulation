@@ -8,3 +8,5 @@ export interface Button {
   eventListener: string
   callback: () => void
 }
+
+export type InputShape = [number, number, number, number]
