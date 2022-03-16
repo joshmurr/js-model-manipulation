@@ -59,7 +59,7 @@ export default class GUI {
     })
   }
 
-  async update(model: Model, log: tf.Logs | null) {
+  async update(model: Model, log?: tf.Logs) {
     await this.drawFilters(model)
     if (log) {
       this.chart.update(log)

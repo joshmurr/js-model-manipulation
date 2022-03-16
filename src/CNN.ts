@@ -91,7 +91,7 @@ export default class CNN extends Model {
     tf.tidy(() => {
       this.net.predict(tf.zeros(this.INPUT_SHAPE))
     })
-    await this.gui.update(this, null)
+    await this.gui.update(this)
   }
 
   async train(data: MnistData) {
@@ -110,9 +110,9 @@ export default class CNN extends Model {
       console.log('Finished training.')
     }
 
-    const BATCH_SIZE = 8 // 512
-    const TRAIN_DATA_SIZE = 8 // 5500
-    const TEST_DATA_SIZE = 8 //1000
+    const BATCH_SIZE = 512
+    const TRAIN_DATA_SIZE = 5500
+    const TEST_DATA_SIZE = 1000
 
     const [trainXs, trainYs] = tf.tidy(() => {
       const d = data.nextTrainBatch(TRAIN_DATA_SIZE)

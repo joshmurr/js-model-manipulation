@@ -42,7 +42,6 @@ export default class Chart {
   }
 
   public draw() {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
     this.metrics.forEach((metric) => {
       const data = this.tidiedLogs[metric]
       const xScale = this.canvas.width / data.length
@@ -50,7 +49,8 @@ export default class Chart {
       const yMax = Math.max(...data)
       const yRange = yMax - yMin
       const yScale = this.canvas.height / yRange
-      console.log(`min: ${yMin}, max: ${yMax}`)
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+      this.ctx.beginPath()
       this.ctx.moveTo(0, 0)
       data.forEach((p, i) => {
         const x = i * xScale
