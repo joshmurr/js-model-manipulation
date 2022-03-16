@@ -66,8 +66,9 @@ export default class Editor {
     data[1] += adder
     data[2] += adder
     this.ctx.putImageData(p, x, y)
-    if (this.currentCallback)
+    if (this.currentCallback) {
       this.currentCallback(this.currentKernel, { p, x, y })
+    }
   }
 
   private handleKeyDown(e: KeyboardEvent) {

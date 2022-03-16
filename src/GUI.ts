@@ -2,15 +2,17 @@ import * as tf from '@tensorflow/tfjs'
 import Model from './Model'
 import Editor from './Editor'
 import Chart from './Chart'
-import { LayerFilters, Button, PixelData } from './types'
+import { LayerFilters, Button, PixelData, DecodedKernel } from './types'
 
 export default class GUI {
   public container: HTMLElement
   public display: HTMLElement
   public editor: Editor
   public chart: Chart
+  private _kernelsToUpdate: Set<string>
 
   constructor() {
+    this._kernelsToUpdate = new Set<string>()
     this.container = document.getElementById('container')
     this.display = document.createElement('div')
     this.display.id = 'display'
@@ -54,7 +56,7 @@ export default class GUI {
 
           canvas.addEventListener('click', (e) => {
             model.isTraining = false
-            editor.show(e, this.setKernel)
+            editor.show(e, this.setKernel.bind(this))
           })
 
           row.appendChild(canvas)
@@ -65,6 +67,8 @@ export default class GUI {
   }
 
   setKernel(kernelId: string, data: PixelData) {
+    this._kernelsToUpdate.add(kernelId)
+
     const canvas = <HTMLCanvasElement>document.getElementById(kernelId)
     const ctx = canvas.getContext('2d')
     ctx.putImageData(data.p, data.x, data.y)
@@ -78,8 +82,19 @@ export default class GUI {
     }
 
     if (this.editor.needsUpdate) {
-      console.log('update model')
+      this.updateModel(model)
     }
+  }
+
+  updateModel(model: Model) {
+    this._kernelsToUpdate.forEach((id) => {
+      const canvas = <HTMLCanvasElement>document.getElementById(id)
+      const ctx = canvas.getContext('2d')
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      model.setKernel(this.decodeKernelId(id), imageData)
+    })
+
+    this._kernelsToUpdate.clear()
   }
 
   async drawFilters(model: Model) {
@@ -115,5 +130,15 @@ export default class GUI {
 
   private getKernelId(l_id: number, f_id: number, k_id: number): string {
     return `l${l_id}-f${f_id}-k${k_id}`
+  }
+
+  private decodeKernelId(kernelId: string): DecodedKernel {
+    const splits = kernelId.split('-')
+    const layerInfo: DecodedKernel = {
+      layer: parseInt(splits[0].slice(1)),
+      filter: parseInt(splits[1].slice(1)),
+      kernel: parseInt(splits[2].slice(1)),
+    }
+    return layerInfo
   }
 }

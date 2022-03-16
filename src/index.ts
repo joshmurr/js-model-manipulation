@@ -45,6 +45,11 @@ async function run() {
       eventListener: 'mouseup',
       callback: trainModel,
     },
+    {
+      selector: '.update-btn',
+      eventListener: 'mouseup',
+      callback: updateGUI,
+    },
   ]
 
   gui.initButtons(buttons)
@@ -56,6 +61,10 @@ async function run() {
   await gui.initModel(model, editor)
   gui.initChart('loss')
   await model.warm()
+
+  async function updateGUI() {
+    gui.update(model)
+  }
 
   async function trainModel() {
     if (model.isTraining) {

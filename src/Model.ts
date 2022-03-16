@@ -1,6 +1,6 @@
 import * as tf from '@tensorflow/tfjs'
 
-import { LayerFilters } from './types'
+import { LayerFilters, DecodedKernel } from './types'
 
 export default class Model {
   public net: tf.LayersModel | tf.Sequential
@@ -61,6 +61,41 @@ export default class Model {
 
   public get isTraining() {
     return this.training
+  }
+
+  public async setKernel(kernelInfo: DecodedKernel, data: ImageData) {
+    const layers: Array<tf.layers.Layer> = await this.getLayers()
+    const layerFilters: LayerFilters = await this.getFilters(layers)
+    const layerNames = Object.keys(layerFilters)
+
+    const layer = layerFilters[layerNames[kernelInfo.layer]]
+    const filter = layer[kernelInfo.filter]
+    filter[kernelInfo.kernel] = this.imageToTensor(data)
+
+    layerNames.forEach((layerName, l_i) => {
+      const filterArray = layerFilters[layerName]
+      const filterStack: tf.Tensor[] = []
+      filterArray.forEach((filter) => {
+        filterStack.push(tf.stack(filter, -1).squeeze([2, 3]))
+      })
+      const layerStack = tf.stack(filterStack, -1) //.squeeze([-1])
+
+      const layer = this.net.getLayer(layerName)
+      layer.setWeights([layerStack]) // TODO: Add biases as well
+    })
+  }
+
+  private imageToTensor(data: ImageData): tf.Tensor {
+    const grayscale = data.data.reduce((acc, p, i) => {
+      if (i % 4 === 0) {
+        acc.push(i)
+      }
+      return acc
+    }, [])
+
+    const tensor = tf.tensor(grayscale).reshape([data.width, data.height, 1, 1])
+
+    return tensor
   }
 
   //function getLayerOutputs(net: tf.LayersModel, data: MnistData) {

@@ -18,3 +18,9 @@ export interface PixelData {
 }
 
 export type ModelCallback = (k: string, data: PixelData) => void
+
+export interface DecodedKernel {
+  layer: number
+  filter: number
+  kernel: number
+}
