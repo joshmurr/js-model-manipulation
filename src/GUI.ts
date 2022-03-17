@@ -75,7 +75,6 @@ export default class GUI {
   }
 
   async update(model: Model, log?: tf.Logs) {
-    await this.drawFilters(model)
     if (log) {
       this.chart.update(log)
       this.chart.draw()
@@ -84,6 +83,8 @@ export default class GUI {
     if (this.editor.needsUpdate) {
       this.updateModel(model)
     }
+
+    await this.drawFilters(model)
   }
 
   updateModel(model: Model) {
@@ -98,7 +99,9 @@ export default class GUI {
   }
 
   async drawFilters(model: Model) {
-    const { layerFilters, layerNames } = model.layerInfo
+    const layers = await model.getLayers()
+    const layerFilters = await model.getFilters(layers)
+    const { layerNames } = model.layerInfo
 
     layerNames.forEach((layerName, l_id) => {
       const filterArray = layerFilters[layerName]

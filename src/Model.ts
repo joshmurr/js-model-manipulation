@@ -81,13 +81,11 @@ export default class Model {
   }
 
   public async setKernel(kernelInfo: DecodedKernel, data: ImageData) {
-    //const { layerFilters, layerNames } = this.layerInfo
-
     const layer = this.layerFilters[this.layerNames[kernelInfo.layer]]
     const filter = layer[kernelInfo.filter]
     filter[kernelInfo.kernel] = this.imageToTensor(data)
 
-    this.layerNames.forEach((layerName, i) => {
+    this.layerNames.forEach((layerName) => {
       const filterArray = this.layerFilters[layerName]
       const filterStack: tf.Tensor[] = []
       filterArray.forEach((filter) => {
@@ -96,7 +94,7 @@ export default class Model {
       const layerStack = tf.stack(filterStack, -1) //.squeeze([-1])
 
       const layer = this.net.getLayer(layerName)
-      const bias = this.layers[i].getWeights()[1]
+      const bias = layer.getWeights()[1]
       layer.setWeights([layerStack, bias]) // TODO: Add biases as well
     })
   }
@@ -104,7 +102,7 @@ export default class Model {
   private imageToTensor(data: ImageData): tf.Tensor {
     const grayscale = data.data.reduce((acc, p, i) => {
       if (i % 4 === 0) {
-        acc.push(i)
+        acc.push(p / 127 - 1)
       }
       return acc
     }, [])

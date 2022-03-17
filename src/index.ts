@@ -67,10 +67,13 @@ async function run() {
   }
 
   async function trainModel() {
+    const playBtn = <HTMLElement>document.querySelector('.play-btn')
     if (model.isTraining) {
       model.isTraining = false
+      playBtn.innerText = 'Play'
     } else {
       model.isTraining = true
+      playBtn.innerText = 'Pause'
       await model.train(data)
     }
   }
