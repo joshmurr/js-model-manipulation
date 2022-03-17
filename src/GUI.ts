@@ -10,12 +10,13 @@ export default class GUI {
   public editor: Editor
   public chart: Chart
   private _kernelsToUpdate: Set<string>
+  private outputSurface: HTMLCanvasElement
 
   constructor() {
     this._kernelsToUpdate = new Set<string>()
     this.container = document.getElementById('container')
     this.display = document.createElement('div')
-    this.display.id = 'display'
+    this.display.classList.add('display')
     this.container.appendChild(this.display)
   }
 
@@ -28,7 +29,7 @@ export default class GUI {
   }
 
   initChart(metrics: string | string[]) {
-    this.chart = new Chart(metrics)
+    this.chart = new Chart(metrics, this.container)
   }
 
   async initModel(model: Model, editor: Editor) {
@@ -64,6 +65,31 @@ export default class GUI {
     })
 
     await this.update(model)
+  }
+
+  initOutput(model: Model) {
+    switch (model.outputType) {
+      case 'image':
+        this.initImageOutput()
+        break
+      case 'classification':
+        //this.initClassificationOutput(model)
+        break
+      default:
+        break
+    }
+  }
+
+  initImageOutput() {
+    const outputContainer = document.createElement('div')
+    outputContainer.classList.add('model-output')
+
+    const canvas = document.createElement('canvas')
+
+    this.outputSurface = canvas
+
+    outputContainer.appendChild(canvas)
+    this.container.appendChild(outputContainer)
   }
 
   setKernel(kernelId: string, data: PixelData) {
@@ -141,5 +167,9 @@ export default class GUI {
       kernel: parseInt(splits[2].slice(1)),
     }
     return layerInfo
+  }
+
+  public get output() {
+    return this.outputSurface
   }
 }

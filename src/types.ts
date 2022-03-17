@@ -9,8 +9,6 @@ export interface Button {
   callback: () => void
 }
 
-export type InputShape = [number, number, number, number]
-
 export interface PixelData {
   p: ImageData
   x: number

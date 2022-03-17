@@ -8,12 +8,11 @@ export default class Chart {
   private container: HTMLElement
   private canvas: HTMLCanvasElement
   private ctx: CanvasRenderingContext2D
-  //private logs: tf.Logs[] = []
   private tidiedLogs: TidiedLogs
   private metrics: string[]
 
-  constructor(metrics: string | string[]) {
-    this.initChart()
+  constructor(metrics: string | string[], parent: HTMLElement) {
+    this.initChart(parent)
 
     if (typeof metrics === 'string') metrics = [metrics]
     this.metrics = metrics
@@ -21,7 +20,7 @@ export default class Chart {
     metrics.forEach((metric) => (this.tidiedLogs[metric] = []))
   }
 
-  private initChart() {
+  private initChart(parent: HTMLElement) {
     this.container = document.createElement('div')
     //this.container.id = 'chart'
     this.container.classList.add('chart-container')
@@ -34,7 +33,7 @@ export default class Chart {
 
     this.ctx = this.canvas.getContext('2d')
 
-    document.body.appendChild(this.container)
+    parent.appendChild(this.container)
   }
 
   public update(log: tf.Logs) {

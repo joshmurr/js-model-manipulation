@@ -2,6 +2,7 @@
 
 import * as tf from '@tensorflow/tfjs'
 import CNN from './CNN'
+import Gen from './Generator'
 import GUI from './GUI'
 import Editor from './Editor'
 import { MnistData } from './data.js'
@@ -50,16 +51,26 @@ async function run() {
       eventListener: 'mouseup',
       callback: updateGUI,
     },
+    {
+      selector: '.predict-btn',
+      eventListener: 'mouseup',
+      callback: predict,
+    },
   ]
 
   gui.initButtons(buttons)
 
   //await showExamples(data);
 
-  const model = await new CNN(gui)
+  //const model = await new CNN(gui)
+  //await model.warm()
+
+  const model = await new Gen(gui)
   await model.warm()
+
   const editor = new Editor()
   await gui.initModel(model, editor)
+  gui.initOutput(model)
   gui.initChart('loss')
 
   async function updateGUI() {
@@ -74,8 +85,13 @@ async function run() {
     } else {
       model.isTraining = true
       playBtn.innerText = 'Pause'
-      await model.train(data)
+      //await model.train(data)
     }
+  }
+
+  async function predict() {
+    const pred = await model.doPrediction()
+    tf.browser.toPixels(pred as tf.Tensor3D, gui.output)
   }
 }
 

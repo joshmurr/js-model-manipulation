@@ -1,4 +1,5 @@
 import * as tf from '@tensorflow/tfjs'
+import GUI from './GUI'
 
 import { LayerFilters, DecodedKernel } from './types'
 
@@ -8,9 +9,31 @@ export default class Model {
   protected layers: Array<tf.layers.Layer>
   protected layerFilters: LayerFilters
   protected layerNames: string[]
+  protected gui: GUI
+
+  protected IMAGE_WIDTH: number
+  protected IMAGE_HEIGHT: number
+  protected IMAGE_CHANNELS: number
+  protected INPUT_SHAPE: number[]
+  protected OUTPUT_TYPE: string
+
+  constructor(gui: GUI) {
+    this.gui = gui
+  }
 
   protected build() {
     this.net = tf.sequential()
+  }
+
+  protected seed(batch: number) {
+    return tf.zeros([batch, ...this.INPUT_SHAPE])
+  }
+
+  public async warm() {
+    tf.tidy(() => {
+      this.net.predict(this.seed(1))
+    })
+    await this.storeLayers()
   }
 
   protected async storeLayers() {
@@ -110,6 +133,10 @@ export default class Model {
     const tensor = tf.tensor(grayscale).reshape([data.width, data.height, 1, 1])
 
     return tensor
+  }
+
+  public get outputType() {
+    return this.OUTPUT_TYPE
   }
 
   //function getLayerOutputs(net: tf.LayersModel, data: MnistData) {

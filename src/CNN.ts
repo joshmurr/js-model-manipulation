@@ -1,16 +1,9 @@
 import * as tf from '@tensorflow/tfjs'
+import GUI from './GUI'
 import Model from './Model'
 import { MnistData } from './data.js'
-import GUI from './GUI'
-import { InputShape } from './types'
 
 export default class CNN extends Model {
-  private IMAGE_WIDTH: number
-  private IMAGE_HEIGHT: number
-  private IMAGE_CHANNELS: number
-  private INPUT_SHAPE: InputShape
-  private gui: GUI
-
   public classNames: string[] = [
     'Zero',
     'One',
@@ -25,7 +18,7 @@ export default class CNN extends Model {
   ]
 
   constructor(gui: GUI) {
-    super()
+    super(gui)
     this.IMAGE_WIDTH = 28
     this.IMAGE_HEIGHT = 28
     this.IMAGE_CHANNELS = 1
@@ -35,7 +28,6 @@ export default class CNN extends Model {
       this.IMAGE_HEIGHT,
       this.IMAGE_CHANNELS,
     ]
-    this.gui = gui
     this.build()
   }
 
@@ -85,14 +77,6 @@ export default class CNN extends Model {
         })
       )
     }
-  }
-
-  public async warm() {
-    tf.tidy(() => {
-      this.net.predict(tf.zeros(this.INPUT_SHAPE))
-    })
-    await this.storeLayers()
-    //await this.gui.update(this)
   }
 
   async train(data: MnistData) {
