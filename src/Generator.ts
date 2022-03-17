@@ -85,7 +85,7 @@ export default class Gen extends Model {
       console.log('Finished training.')
     }
 
-    const BATCH_SIZE = 1
+    const BATCH_SIZE = 128
 
     const trainX = tf.tidy(() =>
       tf.randomNormal([BATCH_SIZE, ...this.INPUT_SHAPE])
@@ -94,9 +94,13 @@ export default class Gen extends Model {
 
     this.gui.displayImage(targetImage, 'target')
 
-    const trainY = tf.browser.fromPixels(targetImage).expandDims(0)
+    const trainBatch = new Array(BATCH_SIZE).fill(
+      tf.browser.fromPixels(targetImage)
+    )
+    const trainY = tf.stack(trainBatch)
 
-    const optimizer = tf.train.adam()
+    const learningRate = 0.005
+    const optimizer = tf.train.adam(learningRate)
     this.net.compile({
       optimizer: optimizer,
       loss: 'meanSquaredError',
