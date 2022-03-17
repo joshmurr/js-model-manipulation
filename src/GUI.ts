@@ -5,22 +5,29 @@ import Chart from './Chart'
 import { Button, PixelData, DecodedKernel } from './types'
 
 export default class GUI {
-  public container: HTMLElement
-  public display: HTMLElement
-  public editor: Editor
-  public chart: Chart
+  private container: HTMLElement
+  private display: HTMLElement
+  private sidebar: HTMLElement
+  private editor: Editor
+  private chart: Chart
   private _kernelsToUpdate: Set<string>
-  private outputSurface: HTMLCanvasElement
+  private outputSurfaces: { [key: string]: HTMLCanvasElement }
 
   constructor() {
     this._kernelsToUpdate = new Set<string>()
     this.container = document.getElementById('container')
     this.display = document.createElement('div')
     this.display.classList.add('display')
+    this.sidebar = document.createElement('div')
+    this.sidebar.classList.add('sidebar')
+
     this.container.appendChild(this.display)
+    this.container.appendChild(this.sidebar)
+
+    this.outputSurfaces = {}
   }
 
-  initButtons(buttons: Array<Button>) {
+  public initButtons(buttons: Array<Button>) {
     buttons.forEach((button) => {
       const { selector, eventListener, callback } = button
       const buttonEl = document.querySelector(selector)
@@ -28,8 +35,8 @@ export default class GUI {
     })
   }
 
-  initChart(metrics: string | string[]) {
-    this.chart = new Chart(metrics, this.container)
+  public initChart(metrics: string | string[]) {
+    this.chart = new Chart(metrics, this.sidebar)
   }
 
   async initModel(model: Model, editor: Editor) {
@@ -67,10 +74,10 @@ export default class GUI {
     await this.update(model)
   }
 
-  initOutput(model: Model) {
+  public initOutput(model: Model) {
     switch (model.outputType) {
       case 'image':
-        this.initImageOutput()
+        this.initImageOutput('modelOutput')
         break
       case 'classification':
         //this.initClassificationOutput(model)
@@ -80,19 +87,31 @@ export default class GUI {
     }
   }
 
-  initImageOutput() {
+  private initImageOutput(ref: string) {
     const outputContainer = document.createElement('div')
     outputContainer.classList.add('model-output')
 
     const canvas = document.createElement('canvas')
 
-    this.outputSurface = canvas
+    this.outputSurfaces[ref] = canvas
 
     outputContainer.appendChild(canvas)
-    this.container.appendChild(outputContainer)
+    this.sidebar.appendChild(outputContainer)
   }
 
-  setKernel(kernelId: string, data: PixelData) {
+  public displayImage(image: HTMLCanvasElement, ref: string) {
+    if (this.outputSurfaces[ref]) return
+
+    const outputContainer = document.createElement('div')
+    outputContainer.classList.add('model-output')
+
+    this.outputSurfaces[ref] = image
+
+    outputContainer.appendChild(image)
+    this.sidebar.appendChild(outputContainer)
+  }
+
+  public setKernel(kernelId: string, data: PixelData) {
     this._kernelsToUpdate.add(kernelId)
 
     const canvas = <HTMLCanvasElement>document.getElementById(kernelId)
@@ -170,6 +189,6 @@ export default class GUI {
   }
 
   public get output() {
-    return this.outputSurface
+    return this.outputSurfaces
   }
 }

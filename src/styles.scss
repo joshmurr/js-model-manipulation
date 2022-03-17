@@ -34,7 +34,7 @@ body {
   }
 
   .chart-container {
-    grid-area: sidebar;
+    display: block;
     background-color: lightgrey;
     width: 300px;
     height: 150px;
@@ -44,8 +44,13 @@ body {
     }
   }
 
-  .model-output {
+  .sidebar {
     grid-area: sidebar;
+    width: 100%;
+  }
+
+  .model-output {
+    display: block;
 
     width: 300px;
     height: 300px;

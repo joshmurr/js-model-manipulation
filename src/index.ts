@@ -85,13 +85,13 @@ async function run() {
     } else {
       model.isTraining = true
       playBtn.innerText = 'Pause'
-      //await model.train(data)
+      await model.train()
     }
   }
 
   async function predict() {
     const pred = await model.doPrediction()
-    tf.browser.toPixels(pred as tf.Tensor3D, gui.output)
+    tf.browser.toPixels(pred as tf.Tensor3D, gui.output.modelOutput)
   }
 }
 

@@ -32,7 +32,7 @@ export default class Gen extends Model {
 
       this.net.add(
         tf.layers.conv2dTranspose({
-          filters: 4,
+          filters: 8,
           kernelSize: 4,
           strides: 2,
           padding: 'same',
@@ -42,7 +42,7 @@ export default class Gen extends Model {
 
       this.net.add(
         tf.layers.conv2dTranspose({
-          filters: 8,
+          filters: 16,
           kernelSize: 4,
           strides: 2,
           padding: 'same',
@@ -67,6 +67,56 @@ export default class Gen extends Model {
     return tf.randomNormal([batch, ...this.INPUT_SHAPE], 0, std_dev)
   }
 
+  public async train(target?: HTMLCanvasElement) {
+    const onEpochEnd = async (epoch: number, log: tf.Logs) => {
+      if (this.training === false) {
+        this.net.stopTraining = true
+      }
+
+      if (epoch % 10 === 0) {
+        console.log(`Epoch: ${epoch}, Rendering...`)
+        await this.gui.update(this, log)
+        const pred = await this.doPrediction()
+        tf.browser.toPixels(pred as tf.Tensor3D, this.gui.output.modelOutput)
+      }
+    }
+
+    const onTrainEnd = () => {
+      console.log('Finished training.')
+    }
+
+    const BATCH_SIZE = 1
+
+    const trainX = tf.tidy(() =>
+      tf.randomNormal([BATCH_SIZE, ...this.INPUT_SHAPE])
+    )
+    const targetImage = target || this.generateTargetImage()
+
+    this.gui.displayImage(targetImage, 'target')
+
+    const trainY = tf.browser.fromPixels(targetImage).expandDims(0)
+
+    const optimizer = tf.train.adam()
+    this.net.compile({
+      optimizer: optimizer,
+      loss: 'meanSquaredError',
+    })
+
+    await this.net.fit(trainX, trainY, {
+      batchSize: BATCH_SIZE,
+      epochs: 1e9,
+      callbacks: { onEpochEnd, onTrainEnd },
+    })
+
+    await this.net.save('localstorage://generator')
+
+    this.net.dispose()
+    this.net = null
+    tf.disposeVariables()
+
+    this.net = await tf.loadLayersModel('localstorage://generator')
+  }
+
   public async doPrediction() {
     return tf.tidy(() => {
       const input = this.seed(1)
@@ -75,5 +125,28 @@ export default class Gen extends Model {
       const squeeze = pred.squeeze().mul(scale).add(scale)
       return squeeze
     })
+  }
+
+  public generateTargetImage(): HTMLCanvasElement {
+    const canvas = document.createElement('canvas')
+    canvas.width = this.IMAGE_WIDTH
+    canvas.height = this.IMAGE_HEIGHT
+    const ctx = canvas.getContext('2d')
+
+    ctx.fillStyle = 'green'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+    ctx.fillStyle = 'blue'
+    ctx.beginPath()
+    ctx.arc(
+      canvas.width / 2,
+      canvas.height / 2,
+      canvas.width / 2 - 4,
+      0,
+      Math.PI * 2
+    )
+    ctx.fill()
+
+    return canvas
   }
 }
