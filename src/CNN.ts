@@ -91,7 +91,8 @@ export default class CNN extends Model {
     tf.tidy(() => {
       this.net.predict(tf.zeros(this.INPUT_SHAPE))
     })
-    await this.gui.update(this)
+    await this.storeLayers()
+    //await this.gui.update(this)
   }
 
   async train(data: MnistData) {

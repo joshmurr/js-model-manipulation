@@ -2,7 +2,7 @@ import * as tf from '@tensorflow/tfjs'
 import Model from './Model'
 import Editor from './Editor'
 import Chart from './Chart'
-import { LayerFilters, Button, PixelData, DecodedKernel } from './types'
+import { Button, PixelData, DecodedKernel } from './types'
 
 export default class GUI {
   public container: HTMLElement
@@ -34,9 +34,7 @@ export default class GUI {
   async initModel(model: Model, editor: Editor) {
     this.editor = editor
 
-    const layers: Array<tf.layers.Layer> = await model.getLayers()
-    const layerFilters: LayerFilters = await model.getFilters(layers)
-    const layerNames = Object.keys(layerFilters)
+    const { layerFilters, layerNames } = model.layerInfo
 
     layerNames.forEach((layerName, l_id) => {
       const filterArray = layerFilters[layerName]
@@ -64,6 +62,8 @@ export default class GUI {
         this.display.appendChild(row)
       })
     })
+
+    await this.update(model)
   }
 
   setKernel(kernelId: string, data: PixelData) {
@@ -98,9 +98,7 @@ export default class GUI {
   }
 
   async drawFilters(model: Model) {
-    const layers: Array<tf.layers.Layer> = await model.getLayers()
-    const layerFilters: LayerFilters = await model.getFilters(layers)
-    const layerNames = Object.keys(layerFilters)
+    const { layerFilters, layerNames } = model.layerInfo
 
     layerNames.forEach((layerName, l_id) => {
       const filterArray = layerFilters[layerName]

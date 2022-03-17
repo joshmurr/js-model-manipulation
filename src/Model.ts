@@ -5,9 +5,26 @@ import { LayerFilters, DecodedKernel } from './types'
 export default class Model {
   public net: tf.LayersModel | tf.Sequential
   protected training = false
+  protected layers: Array<tf.layers.Layer>
+  protected layerFilters: LayerFilters
+  protected layerNames: string[]
 
   protected build() {
     this.net = tf.sequential()
+  }
+
+  protected async storeLayers() {
+    this.layers = await this.getLayers()
+    this.layerFilters = await this.getFilters(this.layers)
+    this.layerNames = Object.keys(this.layerFilters)
+  }
+
+  public get layerInfo() {
+    return {
+      layers: this.layers,
+      layerFilters: this.layerFilters,
+      layerNames: this.layerNames,
+    }
   }
 
   async getLayers() {
@@ -72,7 +89,7 @@ export default class Model {
     const filter = layer[kernelInfo.filter]
     filter[kernelInfo.kernel] = this.imageToTensor(data)
 
-    layerNames.forEach((layerName, l_i) => {
+    layerNames.forEach((layerName) => {
       const filterArray = layerFilters[layerName]
       const filterStack: tf.Tensor[] = []
       filterArray.forEach((filter) => {
