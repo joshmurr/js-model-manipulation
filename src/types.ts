@@ -17,7 +17,7 @@ export interface PixelData {
   y: number
 }
 
-export type ModelCallback = (k: string, data: PixelData) => void
+export type DrawCallback = (k: string, data: PixelData) => void
 
 export interface DecodedKernel {
   layer: number

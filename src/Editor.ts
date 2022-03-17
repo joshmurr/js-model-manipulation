@@ -1,4 +1,4 @@
-import { ModelCallback } from './types'
+import { DrawCallback } from './types'
 
 export default class Editor {
   private container: HTMLElement
@@ -7,7 +7,7 @@ export default class Editor {
   private SHIFT = false
   private SCALE = 30
   private _needsUpdate = false
-  private currentCallback: ModelCallback
+  private currentCallback: DrawCallback
   private currentKernel: string
 
   constructor() {
@@ -37,7 +37,7 @@ export default class Editor {
     document.body.appendChild(this.container)
   }
 
-  public show(event: MouseEvent, callback: ModelCallback) {
+  public show(event: MouseEvent, callback: DrawCallback) {
     this.currentCallback = callback
 
     const kernel = <HTMLCanvasElement>event.target

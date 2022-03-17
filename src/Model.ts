@@ -81,16 +81,14 @@ export default class Model {
   }
 
   public async setKernel(kernelInfo: DecodedKernel, data: ImageData) {
-    const layers: Array<tf.layers.Layer> = await this.getLayers()
-    const layerFilters: LayerFilters = await this.getFilters(layers)
-    const layerNames = Object.keys(layerFilters)
+    //const { layerFilters, layerNames } = this.layerInfo
 
-    const layer = layerFilters[layerNames[kernelInfo.layer]]
+    const layer = this.layerFilters[this.layerNames[kernelInfo.layer]]
     const filter = layer[kernelInfo.filter]
     filter[kernelInfo.kernel] = this.imageToTensor(data)
 
-    layerNames.forEach((layerName) => {
-      const filterArray = layerFilters[layerName]
+    this.layerNames.forEach((layerName, i) => {
+      const filterArray = this.layerFilters[layerName]
       const filterStack: tf.Tensor[] = []
       filterArray.forEach((filter) => {
         filterStack.push(tf.stack(filter, -1).squeeze([2, 3]))
@@ -98,7 +96,8 @@ export default class Model {
       const layerStack = tf.stack(filterStack, -1) //.squeeze([-1])
 
       const layer = this.net.getLayer(layerName)
-      layer.setWeights([layerStack]) // TODO: Add biases as well
+      const bias = this.layers[i].getWeights()[1]
+      layer.setWeights([layerStack, bias]) // TODO: Add biases as well
     })
   }
 
