@@ -184,11 +184,11 @@ export default class Gen extends Model {
   }
 
   public generateTargetBatch(n: number, rand = false) {
-    let sample: HTMLCanvasElement
+    //let sample: HTMLCanvasElement
     const batch: tf.Tensor[] = []
     for (let i = 0; i < n; i++) {
       const canvas = this.generateTargetImage(rand)
-      if (i < 1) sample = canvas
+      //if (i < 1) sample = canvas
       batch.push(tf.browser.fromPixels(canvas))
     }
     return tf.stack(batch)
