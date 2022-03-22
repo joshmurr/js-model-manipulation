@@ -8,7 +8,7 @@ import Editor from './Editor'
 import { MnistData } from './data.js'
 import StateHandler from './StateHandler'
 
-import { Button } from './types'
+import { Button, Checkbox } from './types'
 
 import './styles.scss'
 
@@ -40,7 +40,7 @@ async function run() {
 
   const gui = new GUI()
 
-  const buttons: Array<Button> = [
+  const buttons: Button[] = [
     {
       selector: '.play-btn',
       eventListener: 'mouseup',
@@ -58,7 +58,15 @@ async function run() {
     },
   ]
 
+  const checkboxes: Checkbox[] = [
+    {
+      name: 'diff',
+      selector: 'input[name="diff"]',
+    },
+  ]
+
   gui.initButtons(buttons)
+  gui.initCheckboxes(checkboxes)
 
   //await showExamples(data);
 

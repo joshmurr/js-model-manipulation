@@ -2,7 +2,7 @@ import * as tf from '@tensorflow/tfjs'
 import Model from './Model'
 import Editor from './Editor'
 import Chart from './Chart'
-import { Button, PixelData, DecodedKernel } from './types'
+import { Button, Checkbox, PixelData, DecodedKernel } from './types'
 
 export default class GUI {
   private container: HTMLElement
@@ -12,6 +12,9 @@ export default class GUI {
   private chart: Chart
   private _kernelsToUpdate: Set<string>
   private outputSurfaces: { [key: string]: HTMLCanvasElement }
+  private kernelStore: { [key: string]: ImageData[] }
+  private checkboxes: { [key: string]: HTMLInputElement }
+  private tick = 0
 
   constructor() {
     this._kernelsToUpdate = new Set<string>()
@@ -25,13 +28,21 @@ export default class GUI {
     this.container.appendChild(this.sidebar)
 
     this.outputSurfaces = {}
+    this.kernelStore = {}
+    this.checkboxes = {}
   }
 
   public initButtons(buttons: Array<Button>) {
-    buttons.forEach((button) => {
-      const { selector, eventListener, callback } = button
+    buttons.forEach(({ selector, eventListener, callback }) => {
       const buttonEl = document.querySelector(selector)
       buttonEl.addEventListener(eventListener, callback)
+    })
+  }
+
+  public initCheckboxes(checkboxes: Array<Checkbox>) {
+    checkboxes.forEach(({ name, selector }) => {
+      const checkboxEl = document.querySelector(selector)
+      this.checkboxes[name] = checkboxEl as HTMLInputElement
     })
   }
 
@@ -58,7 +69,10 @@ export default class GUI {
           const canvas = document.createElement('canvas')
           canvas.width = w
           canvas.height = h
-          canvas.id = this.getKernelId(l_id, f_id, k_id)
+          const kernel_id = this.getKernelId(l_id, f_id, k_id)
+          canvas.id = kernel_id
+
+          this.kernelStore[kernel_id] = []
 
           canvas.addEventListener('click', (e) => {
             model.isTraining = false
@@ -119,7 +133,7 @@ export default class GUI {
     ctx.putImageData(data.p, data.x, data.y)
   }
 
-  async update(model: Model, log?: tf.Logs) {
+  public async update(model: Model, log?: tf.Logs) {
     if (log) {
       this.chart.update(log)
       this.chart.draw()
@@ -130,9 +144,11 @@ export default class GUI {
     }
 
     await this.drawFilters(model)
+
+    this.tick++
   }
 
-  updateModel(model: Model) {
+  private updateModel(model: Model) {
     this._kernelsToUpdate.forEach((id) => {
       const canvas = <HTMLCanvasElement>document.getElementById(id)
       const ctx = canvas.getContext('2d')
@@ -156,22 +172,90 @@ export default class GUI {
           const canvas = <HTMLCanvasElement>document.getElementById(kernel_id)
           const ctx = canvas.getContext('2d')
           const [w, h] = kernel.shape
-          const img = new ImageData(w, h)
+          const imageData = new ImageData(w, h)
           const data = kernel.dataSync()
-          for (let x = 0; x < w; x++) {
-            for (let y = 0; y < h; y++) {
-              const ix = (y * w + x) * 4
-              const iv = y * w + x
-              img.data[ix + 0] = Math.floor(127 * (data[iv] + 1))
-              img.data[ix + 1] = Math.floor(127 * (data[iv] + 1))
-              img.data[ix + 2] = Math.floor(127 * (data[iv] + 1))
-              img.data[ix + 3] = 255
-            }
+
+          this.basicCanvasUpdate(imageData, data)
+
+          if (this.tick > 0 && this.checkboxes.diff.checked) {
+            const diffImageData = this.diffCanvasUpdate(
+              imageData,
+              data,
+              kernel_id
+            )
+            ctx.putImageData(diffImageData, 0, 0)
+          } else {
+            ctx.putImageData(imageData, 0, 0)
           }
-          ctx.putImageData(img, 0, 0)
+
+          this.kernelStore[kernel_id].push(imageData)
         })
       })
     })
+  }
+
+  private basicCanvasUpdate(
+    imageData: ImageData,
+    data: Float32Array | Int32Array | Uint8Array
+  ) {
+    const { width: w, height: h } = imageData
+    for (let x = 0; x < w; x++) {
+      for (let y = 0; y < h; y++) {
+        const ix = (y * w + x) * 4
+        const iv = y * w + x
+        imageData.data[ix + 0] = Math.floor(127 * (data[iv] + 1))
+        imageData.data[ix + 1] = Math.floor(127 * (data[iv] + 1))
+        imageData.data[ix + 2] = Math.floor(127 * (data[iv] + 1))
+        imageData.data[ix + 3] = 255
+      }
+    }
+  }
+
+  private diffCanvasUpdate(
+    imageData: ImageData,
+    data: Float32Array | Int32Array | Uint8Array,
+    kernel_id: string
+  ) {
+    const { width: w, height: h } = imageData
+    const kernelStore = this.kernelStore[kernel_id]
+    const epoch = kernelStore.length
+    const prevKernel = kernelStore[epoch - 2]
+
+    const diffImageData = new ImageData(w, h)
+
+    const colourScale = 8
+
+    const getScaled = (d: number) => {
+      let r, g, b
+      if (d < 0) {
+        r = 255 + d * colourScale
+        g = 255 + d * colourScale
+        b = 255
+      } else {
+        r = 255
+        g = 255 - d * colourScale
+        b = 255 - d * colourScale
+      }
+
+      return [r, g, b]
+    }
+
+    for (let x = 0; x < w; x++) {
+      for (let y = 0; y < h; y++) {
+        const ix = (y * w + x) * 4
+        const iv = y * w + x
+
+        const d1 = prevKernel.data[ix + 0] - Math.floor(127 * (data[iv] + 1))
+        const [r, g, b] = getScaled(d1)
+
+        diffImageData.data[ix + 0] = r
+        diffImageData.data[ix + 1] = g
+        diffImageData.data[ix + 2] = b
+        diffImageData.data[ix + 3] = 255
+      }
+    }
+
+    return diffImageData
   }
 
   private getKernelId(l_id: number, f_id: number, k_id: number): string {

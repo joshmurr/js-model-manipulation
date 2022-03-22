@@ -9,6 +9,11 @@ export interface Button {
   callback: () => void
 }
 
+export interface Checkbox {
+  name: string
+  selector: string
+}
+
 export interface PixelData {
   p: ImageData
   x: number
@@ -22,3 +27,5 @@ export interface DecodedKernel {
   filter: number
   kernel: number
 }
+
+//export interface KernelStore {

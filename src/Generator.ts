@@ -102,7 +102,6 @@ export default class Gen extends Model {
     const BATCH_SIZE = 128
 
     const trainX = tf.tidy(() => tf.randomNormal([BATCH_SIZE, this.LATENT_DIM]))
-    //const targetImage = target || this.generateTargetImage()
     const trainY = this.generateTargetBatch(BATCH_SIZE, false)
 
     tf.browser
@@ -118,11 +117,6 @@ export default class Gen extends Model {
 
         this.gui.displayImage(canvas, 'target')
       })
-
-    //const trainBatch = new Array(BATCH_SIZE).fill(
-    //tf.browser.fromPixels(targetImage)
-    //)
-    //const trainY = tf.stack(trainBatch)
 
     const learningRate = 0.0025
     const optimizer = tf.train.adam(learningRate)
