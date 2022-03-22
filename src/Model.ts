@@ -53,8 +53,13 @@ export default class Model {
   async getLayers() {
     const layers = []
 
-    for (let i = 0; i <= this.net.layers.length - 1; i++) {
-      const layer = this.net.getLayer(undefined, i)
+    const internalModel =
+      this.net.layers.length > 1
+        ? (this.net.layers[1] as tf.Sequential)
+        : (this.net.layers[0] as tf.Sequential)
+
+    for (let i = 0; i <= internalModel.layers.length - 1; i++) {
+      const layer = internalModel.getLayer(undefined, i)
       if (layer.name.includes('conv2d')) {
         layers.push(layer)
       }
@@ -116,9 +121,10 @@ export default class Model {
       })
       const layerStack = tf.stack(filterStack, -1) //.squeeze([-1])
 
-      const layer = this.net.getLayer(layerName)
+      const seq = this.net.layers[1] as tf.Sequential
+      const layer = seq.getLayer(layerName)
       const bias = layer.getWeights()[1]
-      layer.setWeights([layerStack, bias]) // TODO: Add biases as well
+      layer.setWeights([layerStack, bias])
     })
   }
 

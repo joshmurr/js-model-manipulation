@@ -3,71 +3,85 @@ import Model from './Model'
 import GUI from './GUI'
 
 export default class Gen extends Model {
-  constructor(gui: GUI) {
+  private LATENT_DIM: number
+
+  constructor(gui: GUI, latentDim?: number) {
     super(gui)
     this.IMAGE_WIDTH = 32
     this.IMAGE_HEIGHT = 32
     this.IMAGE_CHANNELS = 3
-    this.INPUT_SHAPE = [64]
+    this.LATENT_DIM = latentDim || 64
     this.OUTPUT_TYPE = 'image'
-    this.build()
+    this.net = this.build()
   }
 
   protected build() {
-    this.net = tf.sequential()
-    if ('add' in this.net) {
-      this.net.add(
+    const G = tf.sequential()
+    if ('add' in G) {
+      G.add(
         tf.layers.dense({
-          inputShape: this.INPUT_SHAPE,
-          units: 64,
+          inputShape: [this.LATENT_DIM],
+          units: this.LATENT_DIM,
           activation: 'relu',
         })
       )
 
-      this.net.add(
+      G.add(
         tf.layers.reshape({
           targetShape: [8, 8, 1],
         })
       )
 
-      this.net.add(
-        tf.layers.conv2dTranspose({
-          filters: 8,
-          kernelSize: 4,
-          strides: 2,
-          padding: 'same',
-          activation: 'relu',
-        })
-      )
-
-      this.net.add(
+      G.add(
         tf.layers.conv2dTranspose({
           filters: 16,
           kernelSize: 4,
           strides: 2,
           padding: 'same',
           activation: 'relu',
+          kernelInitializer: 'glorotNormal',
         })
       )
+      G.add(tf.layers.batchNormalization())
 
-      this.net.add(
+      G.add(
+        tf.layers.conv2dTranspose({
+          filters: 32,
+          kernelSize: 4,
+          strides: 2,
+          padding: 'same',
+          activation: 'relu',
+          kernelInitializer: 'glorotNormal',
+        })
+      )
+      G.add(tf.layers.batchNormalization())
+
+      G.add(
         tf.layers.conv2dTranspose({
           filters: 3,
           kernelSize: 3,
           strides: 1,
           padding: 'same',
           activation: 'tanh',
+          kernelInitializer: 'glorotNormal',
         })
       )
     }
+
+    const latent = tf.input({ shape: [this.LATENT_DIM] })
+    const fakeImage = G.apply(latent)
+    return tf.model({
+      inputs: [latent],
+      outputs: fakeImage as tf.SymbolicTensor,
+    })
   }
 
   protected seed(batch: number) {
     const std_dev = 3.5
-    return tf.randomNormal([batch, ...this.INPUT_SHAPE], 0, std_dev)
+    return tf.randomNormal([batch, this.LATENT_DIM], 0, std_dev)
   }
 
-  public async train(target?: HTMLCanvasElement) {
+  public async train() {
     const onEpochEnd = async (epoch: number, log: tf.Logs) => {
       if (this.training === false) {
         this.net.stopTraining = true
@@ -87,19 +101,30 @@ export default class Gen extends Model {
 
     const BATCH_SIZE = 128
 
-    const trainX = tf.tidy(() =>
-      tf.randomNormal([BATCH_SIZE, ...this.INPUT_SHAPE])
-    )
-    const targetImage = target || this.generateTargetImage()
+    const trainX = tf.tidy(() => tf.randomNormal([BATCH_SIZE, this.LATENT_DIM]))
+    //const targetImage = target || this.generateTargetImage()
+    const trainY = this.generateTargetBatch(BATCH_SIZE, false)
 
-    this.gui.displayImage(targetImage, 'target')
+    tf.browser
+      .toPixels(tf.slice(trainY, [1], 1).squeeze() as tf.Tensor3D)
+      .then((imgArr) => {
+        const canvas = document.createElement('canvas')
+        canvas.width = this.IMAGE_WIDTH
+        canvas.height = this.IMAGE_HEIGHT
+        const ctx = canvas.getContext('2d')
 
-    const trainBatch = new Array(BATCH_SIZE).fill(
-      tf.browser.fromPixels(targetImage)
-    )
-    const trainY = tf.stack(trainBatch)
+        const data = new ImageData(imgArr, this.IMAGE_WIDTH, this.IMAGE_HEIGHT)
+        ctx.putImageData(data, 0, 0)
 
-    const learningRate = 0.005
+        this.gui.displayImage(canvas, 'target')
+      })
+
+    //const trainBatch = new Array(BATCH_SIZE).fill(
+    //tf.browser.fromPixels(targetImage)
+    //)
+    //const trainY = tf.stack(trainBatch)
+
+    const learningRate = 0.0025
     const optimizer = tf.train.adam(learningRate)
     this.net.compile({
       optimizer: optimizer,
@@ -131,16 +156,20 @@ export default class Gen extends Model {
     })
   }
 
-  public generateTargetImage(): HTMLCanvasElement {
+  private randomColour(): string {
+    return Math.floor(Math.random() * 16777215).toString(16)
+  }
+
+  public generateTargetImage(rand = false): HTMLCanvasElement {
     const canvas = document.createElement('canvas')
     canvas.width = this.IMAGE_WIDTH
     canvas.height = this.IMAGE_HEIGHT
     const ctx = canvas.getContext('2d')
 
-    ctx.fillStyle = 'green'
+    ctx.fillStyle = rand ? `#${this.randomColour()}` : 'green'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-    ctx.fillStyle = 'blue'
+    ctx.fillStyle = rand ? `#${this.randomColour()}` : 'blue'
     ctx.beginPath()
     ctx.arc(
       canvas.width / 2,
@@ -152,5 +181,16 @@ export default class Gen extends Model {
     ctx.fill()
 
     return canvas
+  }
+
+  public generateTargetBatch(n: number, rand = false) {
+    let sample: HTMLCanvasElement
+    const batch: tf.Tensor[] = []
+    for (let i = 0; i < n; i++) {
+      const canvas = this.generateTargetImage(rand)
+      if (i < 1) sample = canvas
+      batch.push(tf.browser.fromPixels(canvas))
+    }
+    return tf.stack(batch)
   }
 }
