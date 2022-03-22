@@ -1,6 +1,7 @@
 import * as tf from '@tensorflow/tfjs'
 import Model from './Model'
 import GUI from './GUI'
+import { RGBPick } from './types'
 
 export default class Gen extends Model {
   private LATENT_DIM: number
@@ -99,10 +100,13 @@ export default class Gen extends Model {
       console.log('Finished training.')
     }
 
+    const DATASET_SIZE = 128 * 4
     const BATCH_SIZE = 128
 
-    const trainX = tf.tidy(() => tf.randomNormal([BATCH_SIZE, this.LATENT_DIM]))
-    const trainY = this.generateTargetBatch(BATCH_SIZE, false)
+    const trainX = tf.tidy(() =>
+      tf.randomNormal([DATASET_SIZE, this.LATENT_DIM])
+    )
+    const trainY = this.generateTargetBatch(DATASET_SIZE, 'green-blue')
 
     tf.browser
       .toPixels(tf.slice(trainY, [1], 1).squeeze() as tf.Tensor3D)
@@ -150,20 +154,44 @@ export default class Gen extends Model {
     })
   }
 
-  private randomColour(): string {
-    return Math.floor(Math.random() * 16777215).toString(16)
+  private randomColour(opts: RGBPick = { r: true, g: true, b: true }): string {
+    const { r, g, b } = opts
+    let colour = 0
+
+    colour += r ? ((1 << 24) * Math.random()) | 0 : (1 << 24) & 0xff
+    colour += g ? ((1 << 16) * Math.random()) | 0 : (1 << 16) & 0xff
+    colour += b ? ((1 << 8) * Math.random()) | 0 : (1 << 8) & 0xff
+
+    return colour.toString(16).padStart(6, '0')
   }
 
-  public generateTargetImage(rand = false): HTMLCanvasElement {
+  private getFillStyle(style: string) {
+    switch (style) {
+      case 'green-blue':
+        return ['green', 'blue']
+      case 'green-blue-perm':
+        return [
+          `#${this.randomColour({ r: false, g: true, b: false })}`,
+          `#${this.randomColour({ r: false, g: false, b: true })}`,
+        ]
+      case 'random':
+      default:
+        return [`#${this.randomColour()}`, `#${this.randomColour()}`]
+    }
+  }
+
+  public generateTargetImage(style: string): HTMLCanvasElement {
     const canvas = document.createElement('canvas')
     canvas.width = this.IMAGE_WIDTH
     canvas.height = this.IMAGE_HEIGHT
     const ctx = canvas.getContext('2d')
 
-    ctx.fillStyle = rand ? `#${this.randomColour()}` : 'green'
+    const [fg, bg] = this.getFillStyle(style)
+
+    ctx.fillStyle = bg
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-    ctx.fillStyle = rand ? `#${this.randomColour()}` : 'blue'
+    ctx.fillStyle = fg
     ctx.beginPath()
     ctx.arc(
       canvas.width / 2,
@@ -177,12 +205,10 @@ export default class Gen extends Model {
     return canvas
   }
 
-  public generateTargetBatch(n: number, rand = false) {
-    //let sample: HTMLCanvasElement
+  public generateTargetBatch(n: number, style: string) {
     const batch: tf.Tensor[] = []
     for (let i = 0; i < n; i++) {
-      const canvas = this.generateTargetImage(rand)
-      //if (i < 1) sample = canvas
+      const canvas = this.generateTargetImage(style)
       batch.push(tf.browser.fromPixels(canvas))
     }
     return tf.stack(batch)

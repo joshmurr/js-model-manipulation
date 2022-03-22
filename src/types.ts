@@ -28,4 +28,8 @@ export interface DecodedKernel {
   kernel: number
 }
 
-//export interface KernelStore {
+export interface RGBPick {
+  r: boolean
+  g: boolean
+  b: boolean
+}
