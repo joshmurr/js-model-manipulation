@@ -6,9 +6,11 @@ import Gen from './Generator'
 import GUI from './GUI'
 import Editor from './Editor'
 import { MnistData } from './data.js'
-import StateHandler from './StateHandler'
+import DataLoader from './DataLoader'
+import fashion_mnist from './data/fashion_mnist.png'
+import fashion_mnist_labels from './data/fashion_mnist_labels.npy'
 
-import { Button, Checkbox } from './types'
+import { Button, Checkbox, DataLoaderOpts } from './types'
 
 import './styles.scss'
 
@@ -67,6 +69,14 @@ async function run() {
 
   gui.initButtons(buttons)
   gui.initCheckboxes(checkboxes)
+
+  const dl = new DataLoader({
+    imagesPath: fashion_mnist,
+    labelsPath: fashion_mnist_labels,
+    ratio: 6 / 7,
+    numClasses: 10,
+  })
+  dl.load()
 
   //await showExamples(data);
 

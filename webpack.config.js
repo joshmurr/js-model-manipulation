@@ -62,6 +62,17 @@ module.exports = {
           },
         ],
       },
+      {
+        test: /\.npy$/,
+        use: [
+          {
+            loader: 'file-loader',
+            options: {
+              outputPath: 'assets',
+            },
+          },
+        ],
+      },
     ],
   },
   resolve: {
