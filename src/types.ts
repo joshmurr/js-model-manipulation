@@ -51,3 +51,9 @@ export interface DataLoaderOpts {
   ratio: number
   numClasses: number
 }
+
+export interface NPYLoaded {
+  dtype: string
+  data: TypedArray
+  shape: number[]
+}

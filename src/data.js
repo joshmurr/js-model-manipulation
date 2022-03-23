@@ -18,7 +18,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import * as tf from '@tensorflow/tfjs'
-import MNIST_IMAGES_SPRITE_PATH from './data/mnist_images.png'
+import MNIST_IMAGES_SPRITE_PATH from './data/mnist.png'
 import MNIST_LABELS_PATH from './data/mnist_labels_uint8.dat'
 
 const IMAGE_SIZE = 784

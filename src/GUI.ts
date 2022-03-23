@@ -2,6 +2,7 @@ import * as tf from '@tensorflow/tfjs'
 import Model from './Model'
 import Editor from './Editor'
 import Chart from './Chart'
+import DataLoader from './DataLoader'
 import { Button, Checkbox, PixelData, DecodedKernel } from './types'
 
 export default class GUI {
@@ -274,5 +275,29 @@ export default class GUI {
 
   public get output() {
     return this.outputSurfaces
+  }
+
+  public async showExamples(data: DataLoader) {
+    const examples = data.nextTestBatch(20)
+    const numExamples = examples.xs.shape[0]
+
+    const container = document.createElement('div')
+    for (let i = 0; i < numExamples; i++) {
+      const imageTensor = tf.tidy(() => {
+        return examples.xs
+          .slice([i, 0], [1, examples.xs.shape[1]])
+          .reshape([28, 28, 1])
+      })
+
+      const canvas = document.createElement('canvas')
+      canvas.width = 28
+      canvas.height = 28
+      canvas.style.margin = '4px'
+      await tf.browser.toPixels(imageTensor as tf.Tensor2D, canvas)
+      container.appendChild(canvas)
+
+      imageTensor.dispose()
+    }
+    this.sidebar.appendChild(container)
   }
 }

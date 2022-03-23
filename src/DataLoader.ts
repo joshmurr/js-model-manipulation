@@ -19,7 +19,7 @@
 
 import * as tf from '@tensorflow/tfjs'
 import NP_Loader from './NPYLoader'
-import { TypedArray, DataLoaderOpts } from './types'
+import { TypedArray, DataLoaderOpts, NPYLoaded } from './types'
 
 export default class DataLoader {
   private imagesPath: string
@@ -35,6 +35,7 @@ export default class DataLoader {
   private datasetImages: TypedArray
   private datasetLabels: TypedArray
   private npyLoader: NP_Loader
+  private labelsType: string
   private ratio: number
   private numTrain: number
   private numTest: number
@@ -48,13 +49,17 @@ export default class DataLoader {
 
     this.imagesPath = opts.imagesPath
     this.labelsPath = opts.labelsPath
+
+    // Get file extension
+    this.labelsType = this.labelsPath.split('.').slice(-1).pop()
+
     this.ratio = opts.ratio
     this.NUM_CLASSES = opts.numClasses
 
     this.npyLoader = new NP_Loader()
   }
 
-  public async load() {
+  public async loadImages() {
     // Make a request for the MNIST sprited image.
     const img = new Image()
     const canvas = document.createElement('canvas')
@@ -109,13 +114,7 @@ export default class DataLoader {
       img.src = this.imagesPath
     })
 
-    const labelsRequest = this.npyLoader.load(this.labelsPath)
-    const [imgResponse, labelsResponse] = await Promise.all([
-      imgRequest,
-      labelsRequest,
-    ])
-
-    this.datasetLabels = labelsResponse.data
+    const imgResponse = await Promise.resolve(imgRequest)
 
     this.numTrain = Math.floor(this.ratio * this.NUM_DATASET_ELEMENTS)
     this.numTest = this.NUM_DATASET_ELEMENTS - this.numTrain
@@ -131,6 +130,28 @@ export default class DataLoader {
       this.IMAGE_SIZE * this.numTrain
     )
     this.testImages = this.datasetImages.slice(this.IMAGE_SIZE * this.numTrain)
+  }
+
+  public async loadLabels() {
+    switch (this.labelsType) {
+      case 'npy':
+        {
+          const labelsRequest = this.npyLoader.load(this.labelsPath)
+          const labelsResponse = await Promise.resolve(labelsRequest)
+          this.datasetLabels = labelsResponse.data
+        }
+        break
+      case 'dat':
+        {
+          const labelsRequest = fetch(this.labelsPath)
+          const labelsResponse = await Promise.resolve(labelsRequest)
+          this.datasetLabels = new Uint8Array(
+            await labelsResponse.arrayBuffer()
+          )
+        }
+        break
+    }
+
     this.trainLabels = this.datasetLabels.slice(
       0,
       this.NUM_CLASSES * this.numTrain
@@ -177,15 +198,20 @@ export default class DataLoader {
       )
       batchImagesArray.set(image, i * this.IMAGE_SIZE)
 
-      const label = data[1].slice(
-        idx * this.NUM_CLASSES,
-        idx * this.NUM_CLASSES + this.NUM_CLASSES
-      )
-      batchLabelsArray.set(label, i * this.NUM_CLASSES)
+      if (data[1] !== undefined) {
+        const label = data[1].slice(
+          idx * this.NUM_CLASSES,
+          idx * this.NUM_CLASSES + this.NUM_CLASSES
+        )
+        batchLabelsArray.set(label, i * this.NUM_CLASSES)
+      }
     }
 
     const xs = tf.tensor2d(batchImagesArray, [batchSize, this.IMAGE_SIZE])
-    const labels = tf.tensor2d(batchLabelsArray, [batchSize, this.NUM_CLASSES])
+    let labels = undefined
+    if (data[1] !== undefined) {
+      labels = tf.tensor2d(batchLabelsArray, [batchSize, this.NUM_CLASSES])
+    }
 
     return { xs, labels }
   }
