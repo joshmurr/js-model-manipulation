@@ -241,4 +241,8 @@ export default class DataLoader {
 
     return { xs, labels }
   }
+
+  public get numTrainElements() {
+    return this.numTrain
+  }
 }

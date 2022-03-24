@@ -79,7 +79,7 @@ async function run() {
   //const model = await new CNN(gui)
   //await model.warm()
 
-  const model = await new Gen(gui)
+  const model = await new Gen(gui, 7 * 7)
   await model.warm()
 
   const editor = new Editor()
@@ -114,7 +114,7 @@ async function run() {
     } else {
       model.isTraining = true
       playBtn.innerText = 'Pause'
-      await model.train()
+      await model.train(dataLoader)
     }
   }
 

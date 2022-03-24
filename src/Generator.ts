@@ -1,6 +1,7 @@
 import * as tf from '@tensorflow/tfjs'
 import Model from './Model'
 import GUI from './GUI'
+import DataLoader from './DataLoader'
 import { RGBPick } from './types'
 
 export default class Gen extends Model {
@@ -8,9 +9,9 @@ export default class Gen extends Model {
 
   constructor(gui: GUI, latentDim?: number) {
     super(gui)
-    this.IMAGE_WIDTH = 32
-    this.IMAGE_HEIGHT = 32
-    this.IMAGE_CHANNELS = 3
+    this.IMAGE_WIDTH = 28
+    this.IMAGE_HEIGHT = 28
+    this.IMAGE_CHANNELS = 1
     this.LATENT_DIM = latentDim || 64
     this.OUTPUT_TYPE = 'image'
     this.net = this.build()
@@ -29,7 +30,7 @@ export default class Gen extends Model {
 
       G.add(
         tf.layers.reshape({
-          targetShape: [8, 8, 1],
+          targetShape: [7, 7, 1],
         })
       )
 
@@ -59,7 +60,7 @@ export default class Gen extends Model {
 
       G.add(
         tf.layers.conv2dTranspose({
-          filters: 3,
+          filters: 1,
           kernelSize: 3,
           strides: 1,
           padding: 'same',
@@ -82,7 +83,7 @@ export default class Gen extends Model {
     return tf.randomNormal([batch, this.LATENT_DIM], 0, std_dev)
   }
 
-  public async train() {
+  public async train(data: DataLoader) {
     const onEpochEnd = async (epoch: number, log: tf.Logs) => {
       if (this.training === false) {
         this.net.stopTraining = true
@@ -100,13 +101,16 @@ export default class Gen extends Model {
       console.log('Finished training.')
     }
 
-    const DATASET_SIZE = 128 * 4
-    const BATCH_SIZE = 128
+    const DATASET_SIZE = 32 // data.numTrainElements //128 * 4
+    const BATCH_SIZE = 8
 
-    const trainX = tf.tidy(() =>
-      tf.randomNormal([DATASET_SIZE, this.LATENT_DIM])
-    )
-    const trainY = this.generateTargetBatch(DATASET_SIZE, 'green-blue')
+    const [trainX, trainY] = tf.tidy(() => {
+      const X = tf.randomNormal([DATASET_SIZE, this.LATENT_DIM])
+      const Y = data.nextTrainBatch(DATASET_SIZE)
+
+      return [X, Y.xs.reshape([DATASET_SIZE, 28, 28, 1])]
+    })
+    //const trainY = this.generateTargetBatch(DATASET_SIZE, 'green-blue')
 
     tf.browser
       .toPixels(tf.slice(trainY, [1], 1).squeeze() as tf.Tensor3D)
