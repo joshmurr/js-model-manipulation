@@ -59,6 +59,28 @@ export default class DataLoader {
     this.npyLoader = new NP_Loader()
   }
 
+  public get options() {
+    return {
+      imagesPath: this.imagesPath,
+      labelsPath: this.labelsPath,
+      ratio: this.ratio,
+      numClasses: this.NUM_CLASSES,
+    }
+  }
+
+  public set options(opts: DataLoaderOpts) {
+    const currentOpts = this.options
+    const newOpts = { ...currentOpts, ...opts }
+
+    this.imagesPath = newOpts.imagesPath
+    this.labelsPath = newOpts.labelsPath
+
+    this.labelsType = this.labelsPath.split('.').slice(-1).pop()
+
+    this.ratio = newOpts.ratio
+    this.NUM_CLASSES = newOpts.numClasses
+  }
+
   public async loadImages() {
     // Make a request for the MNIST sprited image.
     const img = new Image()
@@ -77,7 +99,7 @@ export default class DataLoader {
           this.NUM_DATASET_ELEMENTS * this.IMAGE_SIZE * 4
         )
 
-        const chunkSize = 5000
+        const chunkSize = Math.min(5000, this.NUM_DATASET_ELEMENTS)
         canvas.width = img.width
         canvas.height = chunkSize
 
@@ -122,7 +144,7 @@ export default class DataLoader {
     // Create shuffled indices into the train/test set for when we select a
     // random dataset element for training / validation.
     this.trainIndices = tf.util.createShuffledIndices(this.numTrain)
-    this.testIndices = tf.util.createShuffledIndices(this.numTrain)
+    this.testIndices = tf.util.createShuffledIndices(this.numTest)
 
     // Slice the the images and labels into train and test sets.
     this.trainImages = this.datasetImages.slice(
@@ -161,7 +183,7 @@ export default class DataLoader {
 
   nextTrainBatch(batchSize: number) {
     return this.nextBatch(
-      batchSize,
+      Math.min(this.numTrain, batchSize),
       [this.trainImages, this.trainLabels],
       () => {
         this.shuffledTrainIndex =
@@ -172,11 +194,15 @@ export default class DataLoader {
   }
 
   nextTestBatch(batchSize: number) {
-    return this.nextBatch(batchSize, [this.testImages, this.testLabels], () => {
-      this.shuffledTestIndex =
-        (this.shuffledTestIndex + 1) % this.testIndices.length
-      return this.testIndices[this.shuffledTestIndex]
-    })
+    return this.nextBatch(
+      Math.min(this.numTest, batchSize),
+      [this.testImages, this.testLabels],
+      () => {
+        this.shuffledTestIndex =
+          (this.shuffledTestIndex + 1) % this.testIndices.length
+        return this.testIndices[this.shuffledTestIndex]
+      }
+    )
   }
 
   single() {

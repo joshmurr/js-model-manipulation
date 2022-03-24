@@ -10,6 +10,30 @@
   <body>
     <div id="container">
       <div id="buttons">
+        <label for="cars">Choose a dataset:</label>
+        <select id="dataset-choice" name="dataset-choice">
+          <option
+            name="mnist"
+            data-images="./data/small/mnist_100.png"
+            data-labels="./data/small/mnist_100_labels.npy"
+          >
+            MNIST
+          </option>
+          <option
+            name="fashion_mnist"
+            data-images="./data/small/fashion_mnist_1000.png"
+            data-labels="./data/small/fashion_mnist_1000_labels.npy"
+          >
+            Fashion MNIST
+          </option>
+          <option
+            name="cifar10"
+            data-images="./data/small/cifar10_500.png"
+            data-labels="./data/small/cifar10_500_labels.npy"
+          >
+            Cifar10
+          </option>
+        </select>
         <button class="play-btn">Play</button>
         <button class="update-btn">Update</button>
         <button class="predict-btn">Predict</button>

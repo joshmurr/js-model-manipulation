@@ -3,7 +3,13 @@ import Model from './Model'
 import Editor from './Editor'
 import Chart from './Chart'
 import DataLoader from './DataLoader'
-import { Button, Checkbox, PixelData, DecodedKernel } from './types'
+import {
+  Button,
+  Checkbox,
+  PixelData,
+  DecodedKernel,
+  DropdownOpts,
+} from './types'
 
 export default class GUI {
   private container: HTMLElement
@@ -44,6 +50,13 @@ export default class GUI {
     checkboxes.forEach(({ name, selector }) => {
       const checkboxEl = document.querySelector(selector)
       this.checkboxes[name] = checkboxEl as HTMLInputElement
+    })
+  }
+
+  public initDropdown(dropdownOpts: DropdownOpts[]) {
+    dropdownOpts.forEach(({ name: n, callback }) => {
+      const dropdown = document.getElementById(n)
+      dropdown.onchange = callback
     })
   }
 
@@ -278,10 +291,13 @@ export default class GUI {
   }
 
   public async showExamples(data: DataLoader) {
-    const examples = data.nextTestBatch(20)
+    const examples = data.nextTestBatch(16)
     const numExamples = examples.xs.shape[0]
 
-    const container = document.createElement('div')
+    const container =
+      document.getElementById('samples') || document.createElement('div')
+    container.innerHTML = ''
+    container.id = 'samples'
     for (let i = 0; i < numExamples; i++) {
       const imageTensor = tf.tidy(() => {
         return examples.xs

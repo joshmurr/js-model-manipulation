@@ -7,12 +7,16 @@ import GUI from './GUI'
 import Editor from './Editor'
 import { MnistData } from './data.js'
 import DataLoader from './DataLoader'
-import fashion_mnist from './data/fashion_mnist.png'
-import fashion_mnist_labels from './data/fashion_mnist_labels.npy'
-import mnist from './data/mnist.png'
-import mnist_labels from './data/mnist_labels_uint8.dat'
+//import fashion_mnist from './data/fashion_mnist_10000.png'
+//import fashion_mnist_labels from './data/fashion_mnist_labels_10000.npy'
+//import mnist from './data/mnist.png'
+//import mnist_labels from './data/mnist_labels_uint8.dat'
+//import fashion_mnist from './data/small/mnist_100.png'
+//import fashion_mnist_labels from './data/small/mnist_100_labels.npy'
+//import fashion_mnist from './data/small/fashion_mnist_1000.png'
+//import fashion_mnist_labels from './data/small/fashion_mnist_1000_labels.npy'
 
-import { Button, Checkbox, DataLoaderOpts } from './types'
+import { Button, Checkbox, DataLoaderOpts, DropdownOpts } from './types'
 
 import './styles.scss'
 
@@ -21,6 +25,13 @@ async function run() {
   await data.load()
 
   const gui = new GUI()
+
+  const dropdowns: DropdownOpts[] = [
+    {
+      name: 'dataset-choice',
+      callback: loadDataset,
+    },
+  ]
 
   const buttons: Button[] = [
     {
@@ -56,12 +67,14 @@ async function run() {
   gui.initCheckboxes(checkboxes)
 
   const dataLoader = new DataLoader({
-    imagesPath: fashion_mnist,
-    labelsPath: fashion_mnist_labels,
+    imagesPath: './data/small/mnist_100.png',
+    labelsPath: './data/small/mnist_100_labels.png',
     ratio: 6 / 7,
     numClasses: 10,
   })
   await dataLoader.loadImages()
+
+  gui.initDropdown(dropdowns)
 
   //const model = await new CNN(gui)
   //await model.warm()
@@ -73,6 +86,17 @@ async function run() {
   await gui.initModel(model, editor)
   gui.initOutput(model)
   gui.initChart('loss')
+
+  async function loadDataset() {
+    const imagesPath = this.options[this.selectedIndex].dataset.images
+    const labelsPath = this.options[this.selectedIndex].dataset.labels
+
+    dataLoader.options = {
+      imagesPath: imagesPath,
+      labelsPath: labelsPath,
+    }
+    await dataLoader.loadImages()
+  }
 
   async function showExamples() {
     await gui.showExamples(dataLoader)

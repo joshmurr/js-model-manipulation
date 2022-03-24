@@ -93,13 +93,13 @@ module.exports = {
       extensions: ['.tsx', '.ts', '.js'],
       exclude: 'node_modules',
     }),
-    //new CopyWebpackPlugin({
-    //patterns: [
-    //{
-    //from: 'src/assets',
-    //to: 'assets',
-    //},
-    //],
-    //}),
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: 'src/data',
+          to: 'data',
+        },
+      ],
+    }),
   ],
 }

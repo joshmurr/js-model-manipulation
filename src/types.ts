@@ -48,12 +48,17 @@ export type TypedArray =
 export interface DataLoaderOpts {
   imagesPath: string
   labelsPath: string
-  ratio: number
-  numClasses: number
+  ratio?: number
+  numClasses?: number
 }
 
 export interface NPYLoaded {
   dtype: string
   data: TypedArray
   shape: number[]
+}
+
+export interface DropdownOpts {
+  name: string
+  callback: () => void
 }
