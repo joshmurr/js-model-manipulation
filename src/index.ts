@@ -1,29 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import * as tf from '@tensorflow/tfjs'
-import CNN from './CNN'
 import Gen from './Generator'
 import GUI from './GUI'
 import Editor from './Editor'
-import { MnistData } from './data.js'
 import DataLoader from './DataLoader'
-//import fashion_mnist from './data/fashion_mnist_10000.png'
-//import fashion_mnist_labels from './data/fashion_mnist_labels_10000.npy'
-//import mnist from './data/mnist.png'
-//import mnist_labels from './data/mnist_labels_uint8.dat'
-//import fashion_mnist from './data/small/mnist_100.png'
-//import fashion_mnist_labels from './data/small/mnist_100_labels.npy'
-//import fashion_mnist from './data/small/fashion_mnist_1000.png'
-//import fashion_mnist_labels from './data/small/fashion_mnist_1000_labels.npy'
 
-import { Button, Checkbox, DataLoaderOpts, DropdownOpts } from './types'
+import { Button, Checkbox, DropdownOpts } from './types'
 
 import './styles.scss'
 
 async function run() {
-  const data = new MnistData()
-  await data.load()
-
   const gui = new GUI()
 
   const dropdowns: DropdownOpts[] = [

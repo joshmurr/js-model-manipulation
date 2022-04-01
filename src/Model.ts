@@ -74,7 +74,7 @@ export default class Model {
     for (const layer of layers) {
       const filters = []
 
-      const kernelDesc = await layer.getWeights()[0]
+      const kernelDesc = layer.getWeights()[0]
 
       const shape = kernelDesc.shape
       const numFilters = shape[3]

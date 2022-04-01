@@ -19,7 +19,7 @@
 
 import * as tf from '@tensorflow/tfjs'
 import NP_Loader from './NPYLoader'
-import { TypedArray, DataLoaderOpts, NPYLoaded } from './types'
+import { TypedArray, DataLoaderOpts } from './types'
 
 export default class DataLoader {
   private imagesPath: string
